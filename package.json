@@ -1,0 +1,39 @@
+{
+	"name":        "bolt",
+	"version":     "0.0.0",
+	"author":      "Chromatic Labs (http://chromaticlabs.com/)",
+	"homepage":    "http://chromaticlabs.com/bolt",
+	"bugs":        "https://github.com/jlong64/bolt/issues",
+	"description": "Simple front-end build tools for static websites",
+	"keywords":    ["front-end", "build tools", "dependency management", "blog"],
+	
+	"contributors": [
+		"Jarod Long <jarod@chromaticlabs.com> (http://jarodlong.com/)"
+	],
+	
+	"repository": {
+		"type": "git",
+		"url":  "git://github.com/jlong64/bolt.git"
+	},
+	
+	"dependencies": {
+		"coffee-script": "*",
+		"nomnom":        "*"
+	},
+	
+	"devDependencies": {
+		
+	},
+	
+	"optionalDependencies": {
+		
+	},
+	
+	"engines": {
+		"node": "*"
+	},
+	
+	"bin": {
+		"bolt": "./bin/bolt"
+	}
+}

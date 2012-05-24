@@ -1,0 +1,50 @@
+#!/usr/bin/env coffee
+##
+## bin/bolt
+## 
+## This is our command-line utility. The implementation of each command is located in its own file.
+## Each command exports a function called run, which takes in a single argument for the command-
+## line options.
+##
+
+nomnom         = require "nomnom"
+newCommand     = require "../source/new"
+previewCommand = require "../source/preview"
+buildCommand   = require "../source/build"
+
+# A little hack to print help when the command is run with no arguments.
+process.argv[2] = "-h" if process.argv.length < 3
+
+# Configure nomnom and set up our commands.
+nomnom.script("bolt").colors()
+
+nomnom.command("new").
+	help("Create a new project.").
+	options(
+		path:
+			abbr:    "p"
+			help:    "The path in which to initialize the project."
+			default: "."
+		template:
+			abbr:    "t"
+			help:    "The template to use for the project."
+			default: "blog"
+	).
+	callback (options) -> newCommand.run options
+
+nomnom.command("preview").
+	help("Start a preview server.").
+	options(
+		port:
+			abbr:    "p"
+			help:    "The port number to use for the preview server."
+			default: 6000
+	).
+	callback (options) -> previewCommand.run options
+
+nomnom.command("build").
+	help("Build your project.").
+	callback (options) -> buildCommand.run options
+
+# Parse the arguments.
+args = nomnom.parse()
