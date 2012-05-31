@@ -7,18 +7,22 @@
 ## line options.
 ##
 
-nomnom         = require "nomnom"
-newCommand     = require "../source/new"
-previewCommand = require "../source/preview"
-buildCommand   = require "../source/build"
+lib =
+	nomnom: require "nomnom"
+
+commands =
+	new:     require "../commands/new"
+	preview: require "../commands/preview"
+	build:   require "../commands/build"
+
 
 # A little hack to print help when the command is run with no arguments.
 process.argv[2] = "-h" if process.argv.length < 3
 
 # Configure nomnom and set up our commands.
-nomnom.script("bolt").colors()
+lib.nomnom.script("bolt").colors()
 
-nomnom.command("new").
+lib.nomnom.command("new").
 	help("Create a new project.").
 	options(
 		path:
@@ -30,21 +34,28 @@ nomnom.command("new").
 			help:    "The template to use for the project."
 			default: "blog"
 	).
-	callback (options) -> newCommand.run options
+	callback (options) -> commands.new.run options
 
-nomnom.command("preview").
+lib.nomnom.command("preview").
 	help("Start a preview server.").
 	options(
 		port:
 			abbr:    "p"
 			help:    "The port number to use for the preview server."
-			default: 6000
+			default: 6400
 	).
-	callback (options) -> previewCommand.run options
+	callback (options) -> commands.preview.run options
 
-nomnom.command("build").
+lib.nomnom.command("build").
 	help("Build your project.").
-	callback (options) -> buildCommand.run options
+	options(
+		mode:
+			hidden:  true
+			help:    "Specifies the build mode, which affects which config values are used."
+			default: "build"
+			choices: ["build", "preview"]
+	).
+	callback (options) -> commands.build.run options
 
 # Parse the arguments.
-args = nomnom.parse()
+args = lib.nomnom.parse()

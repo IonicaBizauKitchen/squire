@@ -1,5 +1,5 @@
 ##
-## source/new.coffee
+## commands/new.coffee
 ## 
 ## This contains the implementation of the new command.
 ##

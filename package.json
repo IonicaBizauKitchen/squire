@@ -18,7 +18,12 @@
 	
 	"dependencies": {
 		"coffee-script": "*",
-		"nomnom":        "*"
+		"nomnom":        "*",
+		"file":          "*",
+		"cson":          "*",
+		"underscore":    "*",
+		"deepmerge":     "*",
+		"colors":        "*"
 	},
 	
 	"devDependencies": {
@@ -32,6 +37,8 @@
 	"engines": {
 		"node": "*"
 	},
+	
+	"main": "./bolt.coffee",
 	
 	"bin": {
 		"bolt": "./bin/bolt"
