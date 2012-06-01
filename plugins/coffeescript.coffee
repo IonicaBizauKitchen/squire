@@ -5,6 +5,7 @@
 ##
 
 lib =
+	fs:   require "fs"
 	bolt: require "../bolt"
 	exec: require("child_process").exec
 
@@ -17,9 +18,20 @@ class exports.Plugin extends lib.bolt.BasePlugin
 			@logCoffeeScriptError error if error?
 			callback()
 	
-	# TODO
-	# buildFiles: (inputUrls, outputUrl, callback) ->	
-	# 	callback()
+	buildFiles: (inputUrls, outputUrl, callback) ->
+		fileArguments = inputUrls.join " "
+		
+		# We first need to check for syntax errors. We have to do this as a separate step because
+		# when we actually compile our source, we are compiling a combined file, which causes us to
+		# lose filename and line number information when we have syntax errors.
+		lib.exec "coffee -p #{fileArguments}", (error, stdout, stderr) =>
+			if error?
+				@logCoffeeScriptError error
+				return
+			
+			lib.exec "coffee -pjb #{fileArguments} > #{outputUrl}", (error, stdout, stderr) =>
+				@logCoffeeScriptError error if error?
+				callback()
 	
 	# TODO
 	# buildIndexFile: (inputUrl, outputUrl, callback) ->

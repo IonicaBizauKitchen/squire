@@ -49,8 +49,9 @@ exports.util =
 
 # The base plugin class, to be extended by actual plugins.
 class exports.BasePlugin
-	logError: (explanation, message) -> exports.util.logError explanation, message
-	getUrlInfo:                (url) -> exports.util.getUrlInfo url
+	logError:  (explanation, message) -> exports.util.logError explanation, message
+	getUrlInfo:                 (url) -> exports.util.getUrlInfo url
+	combineFiles: (urls, destination) -> exports.util.combineFiles urls, destination
 	
 	buildFile: (inputUrl, outputUrl, callback) ->
 		@logError "A plugin's buildFile function must be implemented."

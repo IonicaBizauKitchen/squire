@@ -5,14 +5,15 @@
 ##
 
 lib =
-	_:     require "underscore"
-	file:  require "file"
-	fs:    require "fs"
-	path:  require "path"
-	exec:  require("child_process").exec
-	cson:  require "cson"
-	merge: require "deepmerge"
-	bolt:  require "../bolt"
+	_:      require "underscore"
+	fs:     require "fs"
+	path:   require "path"
+	exec:   require("child_process").exec
+	cson:   require "cson"
+	merge:  require "deepmerge"
+	file:   require "file"
+	wrench: require "wrench"
+	bolt:   require "../bolt"
 
 
 command =
@@ -211,7 +212,6 @@ command =
 		
 		# Gather up the ordered list of URLs. We store them as URLs initially because it's easier
 		# to check for duplicates that way.
-		# TODO: Handle require statements.
 		for relativeUrl in relativeUrls
 			relativeUrl = relativeUrl.trim()
 			continue if relativeUrl.length is 0 or relativeUrl[0] is "#"
@@ -229,6 +229,100 @@ command =
 						result.push url
 			else
 				result.push url
+		
+		# Handle require statements in our files.
+		orderedResult = result.slice()
+		
+		for url in result
+			dependentUrls = @getDependentUrlsForUrl url
+			
+			for dependentUrl in dependentUrls
+				unless lib.path.existsSync dependentUrl
+					relativeUrl          = @getUrlInfo(url, @appPath).relativeUrl
+					dependentRelativeUrl = @getUrlInfo(dependentUrl, @appPath).relativeUrl
+					lib.bolt.util.logError "File #{relativeUrl} requires file #{dependentRelativeUrl}, which does not exist."
+					continue
+				
+				index          = orderedResult.indexOf url
+				dependentIndex = orderedResult.indexOf dependentUrl
+				
+				if dependentIndex > index
+					orderedResult.splice dependentIndex, 1
+					orderedResult.splice index, 0, dependentUrl
+		
+		orderedResult
+	
+	
+	# Returns a list of URLs to the dependent files for the file at the given URL based on any
+	# require statements at the top of the file.
+	getDependentUrlsForUrl: (url) ->
+		reader = new lib.wrench.LineReader url
+		result = []
+		
+		requirePatterns = [
+			/^(##?|\/\/)~ +(\S+)$/
+			/^(\/\*)~ +(\S+) +\*\/$/
+		]
+		
+		blockSkipPatterns = [
+			{ open: /^\/\*/, close: /\*\//, oneLine: /^\/\*.*\*\/$/    }
+			{ open: /^(###$|###[^#].*)/,  close: /###/,  oneLine: /^###[^#]+#{3,}$/ }
+		]
+		
+		lineSkipPattern         = /^(#|\/\/)/
+		currentBlockSkipPattern = null
+		
+		# Go through the lines of the file, reading any require statements until we hit some non-
+		# skippable content (i.e., anything that's not a comment).
+		while reader.hasNextLine()
+			line = reader.getNextLine().trim()
+			
+			# If we're in a comment block, skip lines until we match the closing pattern.
+			if currentBlockSkipPattern?
+				currentBlockSkipPattern = null if currentBlockSkipPattern.close.exec(line)?
+				continue
+			
+			# See if we have a require statement on this line.
+			requireMatch = null
+			
+			for requirePattern in requirePatterns
+				requireMatch = requirePattern.exec line
+				break if requireMatch?
+			
+			# If we have a require statement, add the dependent file.
+			if requireMatch?
+				result.push requireMatch[2]
+				continue
+			
+			# See if we have an opening comment block or a one-line block comment.
+			hasOneLineBlockSkip = false
+			
+			for blockSkipPattern in blockSkipPatterns
+				if blockSkipPattern.oneLine.exec(line)?
+					console.log "oneline blocky..."
+					hasOneLineBlockSkip = true
+					break
+				else if blockSkipPattern.open.exec(line)?
+					console.log "MEGA blocky"
+					currentBlockSkipPattern = blockSkipPattern
+					break
+			
+			# If we have an opening comment block, start ignoring lines until we match the
+			# closing pattern.
+			continue if hasOneLineBlockSkip or currentBlockSkipPattern?
+			
+			# Lastly, check if we can skip just this line. Otherwise we're done.
+			if line.length is 0 or lineSkipPattern.exec(line)?
+				continue
+			else
+				break
+		
+		# Convert relative URLs to absolute URLs.
+		urlInfo = lib.bolt.util.getUrlInfo url, @appPath
+		
+		for url, index in result
+			basePath      = if url[0] is "." then urlInfo.path else @appPath
+			result[index] = lib.path.join basePath, url
 		
 		result
 	

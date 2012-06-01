@@ -19,11 +19,12 @@
 	"dependencies": {
 		"coffee-script": "*",
 		"nomnom":        "*",
-		"file":          "*",
 		"cson":          "*",
 		"underscore":    "*",
 		"deepmerge":     "*",
-		"colors":        "*"
+		"colors":        "*",
+		"wrench":        "*",
+		"file":          "*"
 	},
 	
 	"devDependencies": {
