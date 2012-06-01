@@ -1,9 +1,9 @@
 {
-	"name":        "bolt",
+	"name":        "squire",
 	"version":     "0.0.0",
 	"author":      "Chromatic Labs (http://chromaticlabs.com/)",
-	"homepage":    "http://chromaticlabs.com/bolt",
-	"bugs":        "https://github.com/jlong64/bolt/issues",
+	"homepage":    "http://chromaticlabs.com/squire",
+	"bugs":        "https://github.com/jlong64/squire/issues",
 	"description": "Simple front-end build tools for static websites",
 	"keywords":    ["front-end", "build tools", "dependency management", "blog"],
 	
@@ -13,11 +13,15 @@
 	
 	"repository": {
 		"type": "git",
-		"url":  "git://github.com/jlong64/bolt.git"
+		"url":  "git://github.com/jlong64/squire.git"
 	},
 	
 	"dependencies": {
 		"coffee-script": "*",
+		"jade":          "*",
+		"stylus":        "*",
+		"nib":           "*",
+		"markdown-js":   "*",
 		"nomnom":        "*",
 		"cson":          "*",
 		"underscore":    "*",
@@ -39,9 +43,9 @@
 		"node": "*"
 	},
 	
-	"main": "./bolt.coffee",
+	"main": "./squire.coffee",
 	
 	"bin": {
-		"bolt": "./bin/bolt"
+		"squire": "./bin/squire"
 	}
 }

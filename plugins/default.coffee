@@ -6,10 +6,10 @@
 ##
 
 lib =
-	bolt: require "../bolt"
-	exec: require("child_process").exec
+	squire: require "../squire"
+	exec:   require("child_process").exec
 
-class exports.Plugin extends lib.bolt.BasePlugin
+class exports.Plugin extends lib.squire.BasePlugin
 	buildFile: (inputUrl, outputUrl, callback) ->
 		lib.exec "cp #{inputUrl} #{outputUrl}", (error, stdout, stderr) ->
 			throw error if error?

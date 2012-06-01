@@ -13,7 +13,7 @@ lib =
 	merge:  require "deepmerge"
 	file:   require "file"
 	wrench: require "wrench"
-	bolt:   require "../bolt"
+	squire: require "../squire"
 
 
 command =
@@ -34,12 +34,12 @@ command =
 	run: (options) ->
 		# Gather up config values.
 		@rootPath  = process.env.PWD
-		userConfig = lib.cson.parseFileSync("#{@rootPath}/config/bolt.cson") or {}
+		userConfig = lib.cson.parseFileSync("#{@rootPath}/config/squire.cson") or {}
 		@config    = lib.merge @defaultConfig, userConfig
 		@config    = lib.merge @config.global, @config[options.mode]
 		
 		# Store some useful paths.
-		@boltPath       = lib.path.join __dirname, ".."
+		@squirePath       = lib.path.join __dirname, ".."
 		@appPath        = "#{@rootPath}/#{@config.appDirectory.trim()}"
 		@inputPath      = "#{@appPath}/#{@config.inputDirectory.trim()}"
 		@outputPath     = "#{@rootPath}/#{@config.outputDirectory.trim()}"
@@ -75,42 +75,57 @@ command =
 	
 	# Loads all of the plugins specified by the user.
 	loadPlugins: ->
-		DefaultPlugin  = require("#{@boltPath}/plugins/default.coffee").Plugin
+		DefaultPlugin  = require("#{@squirePath}/plugins/default.coffee").Plugin
 		@defaultPlugin = new DefaultPlugin
 		@plugins       = {}
 		
 		return unless @config.plugins?
 		
-		for pluginId in @config.plugins
-			plugin = null
-			
-			paths = [
-				"#{@rootPath}/plugins/#{pluginId}.coffee"
-				"#{@boltPath}/plugins/#{pluginId}.coffee"
-				"bolt-#{pluginId}"
-			]
-			
-			for path in paths
-				try
-					Plugin            = require(path).Plugin
-					plugin            = new Plugin
-					plugin.appContent = appContent
-					# TODO: Set plugin.config if we have, for example, a config/#{pluginId}.cson file.
-					break
-				catch error
-					# TODO: Sometimes this is an actual error with the plugin itself. We need to come up with a better system so we can surface those errors properly.
-					continue
-			
-			# TODO: Use standard error logging.
-			unless plugin?
-				lib.bolt.util.logError "Plugin #{pluginId} was included but does not exist."
-				continue
-			
-			unless plugin.inputExtensions?.length > 0
-				lib.bolt.util.logError "Plugin #{pluginId} does not define any associated input extensions."
-				continue
-			
-			@plugins[extension] = plugin for extension in plugin.inputExtensions
+		@loadPlugin pluginId for pluginId in @config.plugins
+	
+	
+	# A little helper function to load an individual module.
+	loadPlugin: (pluginId) ->
+		pluginModule = null
+		
+		paths = [
+			"#{@rootPath}/plugins/#{pluginId}.coffee"
+			"#{@squirePath}/plugins/#{pluginId}.coffee"
+			"squire-#{pluginId}"
+		]
+		
+		# Look for the module in several different places.
+		for path in paths
+			# Check if the plugin exists at this location.
+			# TODO: This is really hacky. The try/catch will catch both module-not-found errors and
+			# errors with the plugins themselves. Is there a better way to check if a module exists
+			# at the given path?
+			try
+				pluginModule = require path
+				break
+			catch error
+				throw error unless error.toString().indexOf("Error: Cannot find module") is 0
+		
+		unless pluginModule?
+			lib.squire.util.logError "Plugin #{pluginId} was included but does not exist."
+			return
+		
+		unless pluginModule.Plugin?
+			lib.squire.util.logError "Plugin #{pluginId} does not define a plugin class at exports.Plugin."
+			return
+		
+		plugin            = new pluginModule.Plugin
+		plugin.appContent = @appContent
+		pluginConfigPath  = "#{@rootPath}/config/#{pluginId}.cson"
+		userPluginConfig  = {}
+		userPluginConfig  = lib.cson.parseFileSync(pluginConfigPath) or {} if lib.path.existsSync pluginConfigPath
+		plugin.config     = lib.merge plugin.defaultConfig, userPluginConfig
+		
+		unless plugin.inputExtensions?.length > 0
+			lib.squire.util.logError "Plugin #{pluginId} does not define any associated input extensions."
+			return
+		
+		@plugins[extension] = plugin for extension in plugin.inputExtensions
 	
 	
 	# Runs through the content tree, building each file.
@@ -201,7 +216,7 @@ command =
 			chunkUrls.push chunkUrl
 			
 			chunk.plugin.buildFiles chunk.urls, chunkUrl, =>
-				(lib.bolt.util.combineFiles(chunkUrls, outputUrlInfo.url); callback()) if ++builtChunkCount is chunks.length
+				(lib.squire.util.combineFiles(chunkUrls, outputUrlInfo.url); callback()) if ++builtChunkCount is chunks.length
 	
 	
 	# A helper that returns a list of URLs associated with the given concat file. They will be in
@@ -218,7 +233,7 @@ command =
 			url = lib.path.join @appPath, relativeUrl
 			
 			unless lib.path.existsSync url
-				lib.bolt.util.logError "Concat file #{inputUrlInfo.relativeUrl} includes file #{relativeUrl}, which does not exist."
+				lib.squire.util.logError "Concat file #{inputUrlInfo.relativeUrl} includes file #{relativeUrl}, which does not exist."
 				continue
 			
 			if lib.fs.lstatSync(url).isDirectory()
@@ -240,7 +255,7 @@ command =
 				unless lib.path.existsSync dependentUrl
 					relativeUrl          = @getUrlInfo(url, @appPath).relativeUrl
 					dependentRelativeUrl = @getUrlInfo(dependentUrl, @appPath).relativeUrl
-					lib.bolt.util.logError "File #{relativeUrl} requires file #{dependentRelativeUrl}, which does not exist."
+					lib.squire.util.logError "File #{relativeUrl} requires file #{dependentRelativeUrl}, which does not exist."
 					continue
 				
 				index          = orderedResult.indexOf url
@@ -299,11 +314,9 @@ command =
 			
 			for blockSkipPattern in blockSkipPatterns
 				if blockSkipPattern.oneLine.exec(line)?
-					console.log "oneline blocky..."
 					hasOneLineBlockSkip = true
 					break
 				else if blockSkipPattern.open.exec(line)?
-					console.log "MEGA blocky"
 					currentBlockSkipPattern = blockSkipPattern
 					break
 			
@@ -318,7 +331,7 @@ command =
 				break
 		
 		# Convert relative URLs to absolute URLs.
-		urlInfo = lib.bolt.util.getUrlInfo url, @appPath
+		urlInfo = lib.squire.util.getUrlInfo url, @appPath
 		
 		for url, index in result
 			basePath      = if url[0] is "." then urlInfo.path else @appPath
@@ -330,7 +343,7 @@ command =
 	# A proxy function to the normal util function of the same name that adds some additional
 	# useful information.
 	getUrlInfo: (url, basePath = @inputPath) ->
-		info                        = lib.bolt.util.getUrlInfo url
+		info                        = lib.squire.util.getUrlInfo url
 		info.relativePath           = info.path[basePath.length + 1..]
 		info.relativeUrl            = if info.relativePath then "#{info.relativePath}/#{info.fileName}" else info.fileName
 		info.relativePathComponents = info.relativePath.split "/"

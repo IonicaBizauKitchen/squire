@@ -1,5 +1,5 @@
 ##
-## bolt.coffee
+## squire.coffee
 ## 
 ## The entry point into our library when including via require. It's mostly useful for the base
 ## plugin class to be extended by any actual plugins.
@@ -24,7 +24,7 @@ exports.util =
 			console.log "\n#{explanation}\n"
 	
 	# A little helper function to gather up a bunch of useful information about a url.
-	getUrlInfo: (url, basePath = @inputPath) ->
+	getUrlInfo: (url) ->
 		path      = lib.path.dirname url
 		fileName  = lib.path.basename url
 		extension = lib.path.extname(fileName)[1..]
@@ -49,6 +49,8 @@ exports.util =
 
 # The base plugin class, to be extended by actual plugins.
 class exports.BasePlugin
+	defaultConfig: {}
+	
 	logError:  (explanation, message) -> exports.util.logError explanation, message
 	getUrlInfo:                 (url) -> exports.util.getUrlInfo url
 	combineFiles: (urls, destination) -> exports.util.combineFiles urls, destination

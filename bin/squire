@@ -1,6 +1,6 @@
 #!/usr/bin/env coffee
 ##
-## bin/bolt
+## bin/squire
 ## 
 ## This is our command-line utility. The implementation of each command is located in its own file.
 ## Each command exports a function called run, which takes in a single argument for the command-
@@ -20,7 +20,7 @@ commands =
 process.argv[2] = "-h" if process.argv.length < 3
 
 # Configure nomnom and set up our commands.
-lib.nomnom.script("bolt").colors()
+lib.nomnom.script("squire").colors()
 
 lib.nomnom.command("new").
 	help("Create a new project.").

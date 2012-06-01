@@ -1,15 +1,15 @@
 ##
 ## plugins/coffeescript.coffee
 ## 
-## A plugin to handle coffeescript files.
+## A plugin to handle CoffeeScript files.
 ##
 
 lib =
-	fs:   require "fs"
-	bolt: require "../bolt"
-	exec: require("child_process").exec
+	fs:     require "fs"
+	squire: require "../squire"
+	exec:   require("child_process").exec
 
-class exports.Plugin extends lib.bolt.BasePlugin
+class exports.Plugin extends lib.squire.BasePlugin
 	inputExtensions: ["coffee"]
 	outputExtension: "js"
 	
