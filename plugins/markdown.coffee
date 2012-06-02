@@ -7,7 +7,6 @@
 lib =
 	markdown: require("markdown-js").markdown
 	squire:   require "../squire"
-	fs:       require "fs"
 
 class exports.Plugin extends lib.squire.SquirePlugin
 	inputExtensions: ["md", "markdown"]
@@ -21,21 +20,21 @@ class exports.Plugin extends lib.squire.SquirePlugin
 		callback lib.markdown(input)
 	
 	renderIndexContent: (input, options, callback) ->
-		# TEMP: Disabling this until we implement @loadPlugin, @loadFile, etc.
-		callback null
-		return
-		
 		templatePlugin = @loadPlugin @config.templatePlugin
 		
-		if templatePlugin? and options.template?
-			data     = {}                # TODO: Grab this from the top of the file, parsed through CSON.
-			markdown = "*test content!*" # TODO: This is the rest of the file that isn't part of the data.
+		if templatePlugin?
+			data     = { template: "templates/my_template.jade", yo: "dogg" } # TODO: Grab this from the top of the file, parsed through CSON.
+			markdown = "*test content!*"                                      # TODO: This is the rest of the file that isn't part of the data.
 			
-			@buildFile markdown, options, (html) =>
-				localsProperty                  = @config.localsProperty
-				template                        = @loadFile options.template
-				templateOptions                 = {}
-				templateOptions[localsProperty] = { data: data, html: html }
-				templatePlugin.buildIndexFile template, templateOptions, callback
+			if data.template?
+				@renderContent markdown, options, (html) =>
+					localsProperty                  = @config.localsProperty
+					template                        = @loadFile data.template
+					templateOptions                 = {}
+					templateOptions[localsProperty] = { data: data, html: html }
+					
+					templatePlugin.renderIndexContent template, templateOptions, callback
+			else
+				super
 		else
 			super

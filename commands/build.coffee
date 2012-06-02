@@ -9,52 +9,24 @@ lib =
 	fs:     require "fs"
 	path:   require "path"
 	exec:   require("child_process").exec
-	cson:   require "cson"
-	merge:  require "deepmerge"
 	file:   require "file"
 	wrench: require "wrench"
 	squire: require "../squire"
 
 
-command =
-	configDefaults:
-		global:
-			appDirectory:      "app"
-			inputDirectory:    "content"
-			outputDirectory:   "build"
-			tempDirectory:     ".temp"
-			ignoreHiddenFiles: true
-		preview:
-			minify: false
-		build:
-			minify: true
-	
-	
+class BuildCommand extends lib.squire.Squire
 	# The entry point to the command.
 	run: (options) ->
-		# Gather up config values.
-		@rootPath      = process.env.PWD
-		userConfigPath = "#{@rootPath}/config/squire.cson"
-		userConfig     = if lib.path.existsSync userConfigPath then lib.cson.parseFileSync(userConfigPath) or {} else {}
-		@config        = lib.merge @configDefaults, userConfig
-		@config        = lib.merge @config.global, @config[options.mode]
-		
-		# Store some useful paths.
-		@squirePath     = lib.path.join __dirname, ".."
-		@appPath        = "#{@rootPath}/#{@config.appDirectory.trim()}"
-		@inputPath      = "#{@appPath}/#{@config.inputDirectory.trim()}"
-		@outputPath     = "#{@rootPath}/#{@config.outputDirectory.trim()}"
-		@tempPath       = "#{@rootPath}/#{@config.tempDirectory.trim()}"
 		@callback       = options.callback
 		@totalFileCount = 0
 		
 		# Make sure we've got our directories set up properly.
 		unless lib.path.existsSync @appPath
-			lib.squire.util.logError "Configured application path #{@appPath} does not exist."
+			@logError "Configured application path #{@appPath} does not exist."
 			return
 		
 		unless lib.path.existsSync @inputPath
-			lib.squire.util.logError "Configured input path #{@inputPath} does not exist."
+			@logError "Configured input path #{@inputPath} does not exist."
 			return
 		
 		# Do the stuff to make the thing.
@@ -84,57 +56,23 @@ command =
 	
 	# Loads all of the plugins specified by the user.
 	loadPlugins: ->
-		DefaultPlugin  = require("#{@squirePath}/plugins/default.coffee").Plugin
-		@defaultPlugin = new DefaultPlugin
+		@defaultPlugin = new lib.squire.SquirePlugin "default"
 		@plugins       = {}
 		
 		return unless @config.plugins?
 		
-		@loadPlugin pluginId for pluginId in @config.plugins
-	
-	
-	# A little helper function to load an individual module.
-	loadPlugin: (pluginId) ->
-		pluginModule = null
-		
-		paths = [
-			"#{@rootPath}/plugins/#{pluginId}.coffee"
-			"#{@squirePath}/plugins/#{pluginId}.coffee"
-			"squire-#{pluginId}"
-		]
-		
-		# Look for the module in several different places.
-		for path in paths
-			# Check if the plugin exists at this location.
-			# TODO: This is really hacky. The try/catch will catch both module-not-found errors and
-			# errors with the plugins themselves. Is there a better way to check if a module exists
-			# at the given path?
-			try
-				pluginModule = require path
-				break
-			catch error
-				throw error unless error.toString().indexOf("Error: Cannot find module") is 0
-		
-		unless pluginModule?
-			lib.squire.util.logError "Plugin #{pluginId} was included but does not exist."
-			return
-		
-		unless pluginModule.Plugin?
-			lib.squire.util.logError "Plugin #{pluginId} does not define a plugin class at exports.Plugin."
-			return
-		
-		plugin            = new pluginModule.Plugin
-		plugin.appContent = @appContent
-		pluginConfigPath  = "#{@rootPath}/config/#{pluginId}.cson"
-		userPluginConfig  = {}
-		userPluginConfig  = lib.cson.parseFileSync(pluginConfigPath) or {} if lib.path.existsSync pluginConfigPath
-		plugin.config     = lib.merge plugin.configDefaults, userPluginConfig
-		
-		unless plugin.inputExtensions?.length > 0
-			lib.squire.util.logError "Plugin #{pluginId} does not define any associated input extensions."
-			return
-		
-		@plugins[extension] = plugin for extension in plugin.inputExtensions
+		for pluginId in @config.plugins
+			plugin = @loadPlugin pluginId
+			
+			unless plugin?
+				@logError "Plugin #{pluginId} could not be loaded."
+				continue
+			
+			unless plugin.inputExtensions?.length > 0
+				@logError "Plugin #{pluginId} does not define any associated input extensions."
+				continue
+			
+			@plugins[extension] = plugin for extension in plugin.inputExtensions
 	
 	
 	# Runs through the content tree, building each file.
@@ -144,26 +82,21 @@ command =
 			for fileName in files
 				@totalFileCount++ unless @config.ignoreHiddenFiles and fileName[0] is "."
 		
-		# Clean the temp and build folders. Since we're going to be running rm -rf, we do a little
-		# bit of sanity checking to help prevent catastrophic occurrences.
-		if @outputPath.indexOf(@rootPath) is 0 and @tempPath.indexOf(@rootPath) is 0
-			lib.exec "rm -rf #{@outputPath} #{@tempPath}", (error, stdout, stderr) =>
+		# Clean the build folder. Since we're going to be running rm -rf, we do a little bit of
+		# sanity checking to help prevent catastrophic occurrences.
+		if @outputPath.indexOf(@projectPath) is 0
+			lib.exec "rm -rf #{@outputPath}", (error, stdout, stderr) =>
 				throw error if error?
-				lib.fs.mkdirSync @tempPath,  0o0755
 				lib.fs.mkdirSync @outputPath, 0o0755
 				
-				# Fill up the temp and output paths with the directory structure of the input path.
+				# Fill up the output paths with the directory structure of the input path.
 				lib.file.walkSync @inputPath, (path, directories, files) =>
 					relativePath = path[@inputPath.length + 1..]
-					tempPath     = "#{@tempPath}/#{relativePath}"
 					outputPath   = "#{@outputPath}/#{relativePath}"
-					
-					for directoryName in directories
-						lib.fs.mkdirSync "#{tempPath}/#{directoryName}" 
-						lib.fs.mkdirSync "#{outputPath}/#{directoryName}"
+					lib.fs.mkdirSync "#{outputPath}/#{directoryName}" for directoryName in directories
 				
 				# Build each file. We keep track of how many files we've built so that when we're done
-				# we can remove the temp folder and perform the final callback.
+				# we can perform the final callback.
 				builtFileCount = 0
 				
 				lib.file.walkSync @inputPath, (path, directories, files) =>
@@ -171,29 +104,23 @@ command =
 						continue if @config.ignoreHiddenFiles and fileName[0] is "."
 						
 						@buildFile "#{path}/#{fileName}", =>
-							if ++builtFileCount is @totalFileCount
-								lib.exec "rm -rf #{@tempPath}", -> @callback?()
+							@callback?() if ++builtFileCount is @totalFileCount
 	
 	
 	# Builds the file at the given URL. The callback must be called whenever the file is done building.
 	buildFile: (url, callback) ->
-		inputUrlInfo  = @getUrlInfo url
+		inputUrlInfo  = @getUrlInfo url, @inputPath
 		outputUrlInfo = @getOutputUrlInfo inputUrlInfo
 		
 		if inputUrlInfo.isConcatFile
 			@buildConcatFile inputUrlInfo, outputUrlInfo, callback
 		else
-			input = lib.fs.readFileSync(inputUrlInfo.url).toString()
+			input          = lib.fs.readFileSync(inputUrlInfo.url).toString()
+			renderFunction = if inputUrlInfo.isIndexFile then "renderIndexContent" else "renderContent"
 			
-			# TODO: Reduce duplicate code.
-			if inputUrlInfo.isIndexFile
-				inputUrlInfo.plugin.renderContent input, {}, (output) ->
-					lib.fs.writeFileSync outputUrlInfo.url, output
-					callback()
-			else
-				inputUrlInfo.plugin.renderIndexContent input, {}, (output) ->
-					lib.fs.writeFileSync outputUrlInfo.url, output
-					callback()
+			inputUrlInfo.plugin[renderFunction] input, { url: url }, (output) ->
+				lib.fs.writeFileSync outputUrlInfo.url, output
+				callback()
 	
 	
 	# A helper to build a concat file.
@@ -213,13 +140,14 @@ command =
 		currentChunk = null
 		
 		for url in urls
-			urlInfo = @getUrlInfo url
+			urlInfo = @getUrlInfo url, @inputPath
 			input   = lib.fs.readFileSync(url).toString() # TODO: Probably need to check if the file exists.
 			
 			if urlInfo.plugin is currentChunk?.plugin
 				currentChunk.inputs.push input
+				currentChunk.urls.push   url
 			else
-				currentChunk = { plugin: urlInfo.plugin, inputs: [input] }
+				currentChunk = { plugin: urlInfo.plugin, inputs: [input], urls: [url] }
 				chunks.push currentChunk
 		
 		# Build each chunk.
@@ -228,7 +156,7 @@ command =
 		recursiveBuildChunk = (index) ->
 			chunk = chunks[index]
 			
-			chunk.plugin.renderContentList chunk.inputs, {}, (output) ->
+			chunk.plugin.renderContentList chunk.inputs, { urls: chunk.urls }, (output) ->
 				chunkOutputs.push output
 				
 				if ++index < chunks.length
@@ -254,7 +182,7 @@ command =
 			url = lib.path.join @appPath, relativeUrl
 			
 			unless lib.path.existsSync url
-				lib.squire.util.logError "Concat file #{inputUrlInfo.relativeUrl} includes file #{relativeUrl}, which does not exist."
+				@logError "Concat file #{inputUrlInfo.relativeUrl} includes file #{relativeUrl}, which does not exist."
 				continue
 			
 			if lib.fs.lstatSync(url).isDirectory()
@@ -274,9 +202,9 @@ command =
 			
 			for dependentUrl in dependentUrls
 				unless lib.path.existsSync dependentUrl
-					relativeUrl          = @getUrlInfo(url, @appPath).relativeUrl
-					dependentRelativeUrl = @getUrlInfo(dependentUrl, @appPath).relativeUrl
-					lib.squire.util.logError "File #{relativeUrl} requires file #{dependentRelativeUrl}, which does not exist."
+					relativeUrl          = @getUrlInfo(url).relativeUrl
+					dependentRelativeUrl = @getUrlInfo(dependentUrl).relativeUrl
+					@logError "File #{relativeUrl} requires file #{dependentRelativeUrl}, which does not exist."
 					continue
 				
 				index          = orderedResult.indexOf url
@@ -301,7 +229,7 @@ command =
 		]
 		
 		blockSkipPatterns = [
-			{ open: /^\/\*/, close: /\*\//, oneLine: /^\/\*.*\*\/$/    }
+			{ open: /^\/\*/,              close: /\*\//, oneLine: /^\/\*.*\*\/$/    }
 			{ open: /^(###$|###[^#].*)/,  close: /###/,  oneLine: /^###[^#]+#{3,}$/ }
 		]
 		
@@ -352,7 +280,7 @@ command =
 				break
 		
 		# Convert relative URLs to absolute URLs.
-		urlInfo = lib.squire.util.getUrlInfo url, @appPath
+		urlInfo = @getUrlInfo url
 		
 		for url, index in result
 			basePath      = if url[0] is "." then urlInfo.path else @appPath
@@ -361,16 +289,12 @@ command =
 		result
 	
 	
-	# A proxy function to the normal util function of the same name that adds some additional
-	# useful information.
-	getUrlInfo: (url, basePath = @inputPath) ->
-		info                        = lib.squire.util.getUrlInfo url
-		info.relativePath           = info.path[basePath.length + 1..]
-		info.relativeUrl            = if info.relativePath then "#{info.relativePath}/#{info.fileName}" else info.fileName
-		info.relativePathComponents = info.relativePath.split "/"
-		info.isConcatFile           = info.fileNameComponents[info.fileNameComponents.length - 2] is "concat"
-		info.isIndexFile            = info.baseName is "index"
-		info.plugin                 = @plugins[info.extension] or @defaultPlugin
+	# We override this function to add some additional information about the URL.
+	getUrlInfo: (url, basePath = @appPath) ->
+		info              = super
+		info.isConcatFile = info.fileNameComponents[info.fileNameComponents.length - 2] is "concat"
+		info.isIndexFile  = info.baseName is "index"
+		info.plugin       = @plugins[info.extension] or @defaultPlugin
 		info
 	
 	
@@ -383,13 +307,7 @@ command =
 		outputUrl       = "#{outputPath}/#{outputBaseName}"
 		outputUrl      += ".#{outputExtension}" if outputExtension
 		@getUrlInfo outputUrl, @outputPath
-	
-	
-	# Takes in a URL info object for an output file and returns a new URL info object based on the
-	# temporary URL.
-	getTempUrlInfo: (outputUrlInfo) ->
-		@getUrlInfo "#{@tempPath}/#{outputUrlInfo.relativeUrl}", @tempPath
 
 
 # We only expose the run function.
-exports.run = (options) -> command.run options
+exports.run = (options) -> (new BuildCommand options.mode).run options

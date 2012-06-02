@@ -16,11 +16,13 @@ class exports.Plugin extends lib.squire.SquirePlugin
 	
 	renderContent: (input, options, callback) ->
 		try
-			compileFunction = lib.jade.compile jade, { filename: options.url }
-			locals          = lib.merge (options.locals or {}), { content: @appContent }
+			compileFunction = lib.jade.compile input, { filename: options.url }
+			locals          = options.locals or {}
+			locals.content  = @appContent
 			html            = compileFunction locals
 			callback html
 		catch error
+			throw error
 			# TODO: The error we get back is not very helpful (no context information). Can we get
 			# the line number or any other useful information?
 			message = error.toString()
