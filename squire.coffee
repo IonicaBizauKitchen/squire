@@ -117,8 +117,9 @@ class exports.SquirePlugin extends exports.Squire
 		# We add to the base config with our plugin-specific config.
 		userConfigPath = "#{@projectPath}/config/#{@id}.cson"
 		userConfig     = if lib.path.existsSync userConfigPath then lib.cson.parseFileSync(userConfigPath) or {} else {}
-		pluginConfig   = lib.merge @configDefaults, userConfig
-		pluginConfig   = lib.merge pluginConfig.global, (pluginConfig[@mode] or {}) if pluginConfig.global?
+		pluginConfig   = lib.merge { global: {}, preview: {}, build: {} }, @configDefaults
+		pluginConfig   = lib.merge pluginConfig, userConfig
+		pluginConfig   = lib.merge pluginConfig.global, pluginConfig[@mode]
 		@config        = lib.merge @config, pluginConfig
 	
 	renderContent: (input, options, callback) ->

@@ -119,7 +119,7 @@ class BuildCommand extends lib.squire.Squire
 			renderFunction = if inputUrlInfo.isIndexFile then "renderIndexContent" else "renderContent"
 			
 			inputUrlInfo.plugin[renderFunction] input, { url: url }, (output) ->
-				lib.fs.writeFileSync outputUrlInfo.url, output
+				lib.fs.writeFileSync outputUrlInfo.url, (output or "")
 				callback()
 	
 	
@@ -157,7 +157,7 @@ class BuildCommand extends lib.squire.Squire
 			chunk = chunks[index]
 			
 			chunk.plugin.renderContentList chunk.inputs, { urls: chunk.urls }, (output) ->
-				chunkOutputs.push output
+				chunkOutputs.push output if output?
 				
 				if ++index < chunks.length
 					recursiveBuildChunk index

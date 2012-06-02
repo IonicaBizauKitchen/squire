@@ -15,7 +15,8 @@ class exports.Plugin extends lib.squire.SquirePlugin
 	outputExtension: "css"
 	
 	configDefaults:
-		useNib: true
+		global:
+			useNib: true
 	
 	renderContent: (input, options, callback) ->
 		renderFunction = lib.stylus input

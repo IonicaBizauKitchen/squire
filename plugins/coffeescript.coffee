@@ -18,22 +18,30 @@ class exports.Plugin extends lib.squire.SquirePlugin
 		
 		try
 			js = lib.coffee.compile input, options.compilerOptions or {}
+			callback js
 		catch error
 			message = error.toString().split("\n")[0]
 			message = "In #{options.url}:\n\n#{message}" if options.url?
 			@logError "There was an error while compiling your CoffeeScript:", message
-		
-		callback js
+			callback null
 	
 	renderContentList: (inputs, options, callback) ->
 		# We first need to check for syntax errors. We have to do this as a separate step because
 		# when we actually compile our source, we are compiling a combined file, which causes us to
 		# lose filename and line number information when we have syntax errors.
+		validInputCount   = 0
+		invalidInputCount = 0
+		
 		for input, index in inputs
 			url = options.urls?[index]
-			@renderContent input, (if url? then { url: url } else {}), ->
-		
-		@renderContent inputs.join("\n\n"), options, callback
+			
+			@renderContent input, (if url? then { url: url } else {}), (output) =>
+				if output?
+					@renderContent inputs.join("\n\n"), options, callback if ++validInputCount is inputs.length
+				else
+					invalidInputCount++
+				
+				callback null if invalidInputCount > 0 and invalidInputCount + validInputCount is inputs.length
 	
 	# TODO
 	# renderIndexContent: (input, options, callback) ->

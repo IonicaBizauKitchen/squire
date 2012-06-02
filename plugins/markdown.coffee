@@ -14,22 +14,31 @@ class exports.Plugin extends lib.squire.SquirePlugin
 	outputExtension: "html"
 	
 	configDefaults:
-		templatePlugin: "jade"
-		localsProperty: "locals"
+		global:
+			templatePlugin:  "jade"
+			localsProperty:  "locals"
+			separatorString: "~"
 	
 	renderContent: (input, options, callback) ->
-		[data, markdown] = @parseInput input
-		callback lib.markdown(markdown), data
+		[markdown, data] = @parseInput input
+		
+		if data.constructor is Error
+			message = data.toString()
+			message = "In #{options.url}:\n\n#{message}" if options.url?
+			@logError "There was an error while parsing your Markdown file's CSON header data.", message
+			callback null
+		else
+			callback lib.markdown(markdown), data
 	
 	renderIndexContent: (input, options, callback) ->
 		templatePlugin = @loadPlugin @config.templatePlugin
 		
 		if templatePlugin?
 			@renderContent input, options, (html, data) =>
-				if data.template?
+				if data?.template?
 					localsProperty                  = @config.localsProperty
 					template                        = @loadFile data.template
-					templateOptions                 = {}
+					templateOptions                 = { url: data.template }
 					templateOptions[localsProperty] = { data: data, html: html }
 					
 					templatePlugin.renderIndexContent template, templateOptions, callback
@@ -46,9 +55,9 @@ class exports.Plugin extends lib.squire.SquirePlugin
 		markdown = input
 		
 		for line, index in lines
-			if line.trim()[0] is "~"
+			if line.trim().indexOf(@config.separatorString) is 0
 				data     = lib.cson.parseSync lines[0..index - 1].join("\n")
 				markdown = lines[index + 1..].join "\n"
 				break
 		
-		[data, markdown]
+		[markdown, data]
