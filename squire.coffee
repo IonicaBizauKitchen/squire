@@ -11,8 +11,10 @@ lib =
 	colors: require "colors"
 
 
-# A small collection of helper utility functions.
-exports.util =
+# This class is a simple collection of utility functions. It is extended by SquirePlugin, and an
+# instance of it is also exported via exports.util to provide direct access to the utility
+# functions.
+class Squire
 	# Prints a nicely-formatted error message.
 	logError: (explanation, message) ->
 		explanation = lib.colors.red "\u2718 #{explanation}"
@@ -48,31 +50,36 @@ exports.util =
 
 
 # The base plugin class, to be extended by actual plugins.
-class exports.BasePlugin
-	defaultConfig: {}
+class exports.SquirePlugin extends Squire
+	configDefaults: {}
 	
-	logError:  (explanation, message) -> exports.util.logError explanation, message
-	getUrlInfo:                 (url) -> exports.util.getUrlInfo url
-	combineFiles: (urls, destination) -> exports.util.combineFiles urls, destination
+	renderContent: (input, options, callback) ->
+		@logError "A plugin's renderContent function must be implemented."
+		callback null
 	
-	buildFile: (inputUrl, outputUrl, callback) ->
-		@logError "A plugin's buildFile function must be implemented."
-	
-	buildFiles: (inputUrls, outputUrl, callback) ->
-		tempUrls       = []
-		builtFileCount = 0
+	renderContentList: (inputs, options, callback) ->
+		result = ""
 		
-		for inputUrl, index in inputUrls
-			tempUrl = "#{outputUrl}_#{index}"
-			tempUrls.push tempUrl
+		recursiveRender = (index) =>
+			input = inputs[index]
 			
-			@buildFile inputUrl, tempUrl, ->
-				if ++builtFileCount is inputUrls.length
-					exports.util.combineFiles tempUrls, outputUrl
-					lib.fs.unlinkSync tempUrl for tempUrl in tempUrls when lib.path.existsSync tempUrl
-					callback()
+			@renderContent input, options, (content) ->
+				result += "#{content}\n\n"
+				if ++index < inputs.length then recursiveRender index else callback result
+		
+		if inputs.length > 0 then recursiveRender 0 else callback null
 	
-	buildIndexFile: (inputUrl, outputUrl, callback) ->
+	renderIndexContent: (input, options, callback) ->
 		# By default, index files will be treated just like normal files.
 		# TODO: This is probably not good, because the output URL will have an HTML extension.
-		@buildFile inputUrl, outputUrl, callback
+		@renderContent input, options, callback
+
+
+# The app content tree that gets passed in to plugins is comprised of instances of this class.
+# TODO: Implement this.
+class exports.ContentFile
+	constructor: (@fileName) ->
+
+
+# We expose an instance of Squire to provide access to utility functions.
+exports.util = new Squire

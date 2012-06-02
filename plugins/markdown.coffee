@@ -9,14 +9,33 @@ lib =
 	squire:   require "../squire"
 	fs:       require "fs"
 
-class exports.Plugin extends lib.squire.BasePlugin
+class exports.Plugin extends lib.squire.SquirePlugin
 	inputExtensions: ["md", "markdown"]
 	outputExtension: "html"
 	
-	buildFile: (inputUrl, outputUrl, callback) ->
-		html = lib.markdown lib.fs.readFileSync(inputUrl).toString()
-		lib.fs.writeFileSync outputUrl, html
-		callback()
+	configDefaults:
+		templatePlugin: "jade"
+		localsProperty: "locals"
 	
-	# TODO
-	# buildIndexFile: (inputUrl, outputUrl, callback) ->
+	renderContent: (input, options, callback) ->
+		callback lib.markdown(input)
+	
+	renderIndexContent: (input, options, callback) ->
+		# TEMP: Disabling this until we implement @loadPlugin, @loadFile, etc.
+		callback null
+		return
+		
+		templatePlugin = @loadPlugin @config.templatePlugin
+		
+		if templatePlugin? and options.template?
+			data     = {}                # TODO: Grab this from the top of the file, parsed through CSON.
+			markdown = "*test content!*" # TODO: This is the rest of the file that isn't part of the data.
+			
+			@buildFile markdown, options, (html) =>
+				localsProperty                  = @config.localsProperty
+				template                        = @loadFile options.template
+				templateOptions                 = {}
+				templateOptions[localsProperty] = { data: data, html: html }
+				templatePlugin.buildIndexFile template, templateOptions, callback
+		else
+			super

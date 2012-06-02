@@ -7,38 +7,28 @@
 lib =
 	fs:     require "fs"
 	squire: require "../squire"
-	exec:   require("child_process").exec
+	coffee: require "coffee-script"
 
-class exports.Plugin extends lib.squire.BasePlugin
+class exports.Plugin extends lib.squire.SquirePlugin
 	inputExtensions: ["coffee"]
 	outputExtension: "js"
 	
-	buildFile: (inputUrl, outputUrl, callback) ->
-		lib.exec "coffee -p #{inputUrl} > #{outputUrl}", (error, stdout, stderr) =>
-			@logCoffeeScriptError error if error?
-			callback()
-	
-	buildFiles: (inputUrls, outputUrl, callback) ->
-		fileArguments = inputUrls.join " "
+	renderContent: (input, options, callback) ->
+		js = null
 		
+		try
+			js = lib.coffee.compile input, options.compilerOptions or {}
+		catch error
+			@logError "There was an error while compiling your CoffeeScript:", error.toString().split("\n")[0]
+		
+		callback js
+	
+	renderContentList: (inputs, options, callback) ->
 		# We first need to check for syntax errors. We have to do this as a separate step because
 		# when we actually compile our source, we are compiling a combined file, which causes us to
 		# lose filename and line number information when we have syntax errors.
-		lib.exec "coffee -p #{fileArguments}", (error, stdout, stderr) =>
-			if error?
-				@logCoffeeScriptError error
-				return
-			
-			lib.exec "coffee -pjb #{fileArguments} > #{outputUrl}", (error, stdout, stderr) =>
-				@logCoffeeScriptError error if error?
-				callback()
+		@renderContent input, options, (->) for input in inputs
+		@renderContent inputs.join("\n\n"), options, callback
 	
 	# TODO
-	# buildIndexFile: (inputUrl, outputUrl, callback) ->
-	
-	logCoffeeScriptError: (error) ->
-		# Remove extra cruft from the error message.
-		message = error.toString().split("\n")[0]
-		prefix  = "Error: Command failed: "
-		message = message.slice prefix.length if message.indexOf(prefix) >= 0
-		@logError "There was an error while compiling your CoffeeScript:", message
+	# renderIndexContent: (input, options, callback) ->

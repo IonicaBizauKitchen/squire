@@ -8,21 +8,22 @@ lib =
 	jade:   require "jade"
 	squire: require "../squire"
 	fs:     require "fs"
+	merge:  require "deepmerge"
 
-class exports.Plugin extends lib.squire.BasePlugin
+class exports.Plugin extends lib.squire.SquirePlugin
 	inputExtensions: ["jade"]
 	outputExtension: "html"
 	
-	buildFile: (inputUrl, outputUrl, callback) ->
-		jade = lib.fs.readFileSync(inputUrl).toString()
-		
+	renderContent: (input, options, callback) ->
 		try
-			compileFunction = lib.jade.compile jade, { filename: inputUrl }
-			html            = compileFunction { content: @appContent }
-			lib.fs.writeFileSync outputUrl, html
+			compileFunction = lib.jade.compile jade, { filename: options.url }
+			locals          = lib.merge (options.locals or {}), { content: @appContent }
+			html            = compileFunction locals
+			callback html
 		catch error
 			# TODO: The error we get back is not very helpful (no context information). Can we get
 			# the line number or any other useful information?
-			@logError "There was an error while compiling your Jade template.", "In #{inputUrl}:\n\n#{error.toString()}"
-		
-		callback()
+			message = error.toString()
+			message = "In #{options.url}:\n\n#{message}" if options.url?
+			@logError "There was an error while compiling your Jade template.", message
+			callback null

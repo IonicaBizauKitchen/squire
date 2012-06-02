@@ -17,7 +17,7 @@ lib =
 
 
 command =
-	defaultConfig:
+	configDefaults:
 		global:
 			appDirectory:      "app"
 			inputDirectory:    "content"
@@ -33,19 +33,29 @@ command =
 	# The entry point to the command.
 	run: (options) ->
 		# Gather up config values.
-		@rootPath  = process.env.PWD
-		userConfig = lib.cson.parseFileSync("#{@rootPath}/config/squire.cson") or {}
-		@config    = lib.merge @defaultConfig, userConfig
-		@config    = lib.merge @config.global, @config[options.mode]
+		@rootPath      = process.env.PWD
+		userConfigPath = "#{@rootPath}/config/squire.cson"
+		userConfig     = if lib.path.existsSync userConfigPath then lib.cson.parseFileSync(userConfigPath) or {} else {}
+		@config        = lib.merge @configDefaults, userConfig
+		@config        = lib.merge @config.global, @config[options.mode]
 		
 		# Store some useful paths.
-		@squirePath       = lib.path.join __dirname, ".."
+		@squirePath     = lib.path.join __dirname, ".."
 		@appPath        = "#{@rootPath}/#{@config.appDirectory.trim()}"
 		@inputPath      = "#{@appPath}/#{@config.inputDirectory.trim()}"
 		@outputPath     = "#{@rootPath}/#{@config.outputDirectory.trim()}"
 		@tempPath       = "#{@rootPath}/#{@config.tempDirectory.trim()}"
 		@callback       = options.callback
 		@totalFileCount = 0
+		
+		# Make sure we've got our directories set up properly.
+		unless lib.path.existsSync @appPath
+			lib.squire.util.logError "Configured application path #{@appPath} does not exist."
+			return
+		
+		unless lib.path.existsSync @inputPath
+			lib.squire.util.logError "Configured input path #{@inputPath} does not exist."
+			return
 		
 		# Do the stuff to make the thing.
 		@gatherContent()
@@ -69,8 +79,7 @@ command =
 				continue if @config.ignoreHiddenFiles and fileName[0] is "."
 				
 				# TODO: Add more info here.
-				directoryContent[fileName] =
-					name: fileName
+				directoryContent[fileName] = new lib.squire.ContentFile
 	
 	
 	# Loads all of the plugins specified by the user.
@@ -119,7 +128,7 @@ command =
 		pluginConfigPath  = "#{@rootPath}/config/#{pluginId}.cson"
 		userPluginConfig  = {}
 		userPluginConfig  = lib.cson.parseFileSync(pluginConfigPath) or {} if lib.path.existsSync pluginConfigPath
-		plugin.config     = lib.merge plugin.defaultConfig, userPluginConfig
+		plugin.config     = lib.merge plugin.configDefaults, userPluginConfig
 		
 		unless plugin.inputExtensions?.length > 0
 			lib.squire.util.logError "Plugin #{pluginId} does not define any associated input extensions."
@@ -173,16 +182,23 @@ command =
 		
 		if inputUrlInfo.isConcatFile
 			@buildConcatFile inputUrlInfo, outputUrlInfo, callback
-		else if inputUrlInfo.isIndexFile
-			inputUrlInfo.plugin.buildIndexFile inputUrlInfo.url, outputUrlInfo.url, callback
 		else
-			inputUrlInfo.plugin.buildFile inputUrlInfo.url, outputUrlInfo.url, callback
+			input = lib.fs.readFileSync(inputUrlInfo.url).toString()
+			
+			# TODO: Reduce duplicate code.
+			if inputUrlInfo.isIndexFile
+				inputUrlInfo.plugin.renderContent input, {}, (output) ->
+					lib.fs.writeFileSync outputUrlInfo.url, output
+					callback()
+			else
+				inputUrlInfo.plugin.renderIndexContent input, {}, (output) ->
+					lib.fs.writeFileSync outputUrlInfo.url, output
+					callback()
 	
 	
 	# A helper to build a concat file.
 	buildConcatFile: (inputUrlInfo, outputUrlInfo, callback) ->
-		urls        = @getUrlsForConcatFile inputUrlInfo
-		tempUrlInfo = @getTempUrlInfo outputUrlInfo
+		urls = @getUrlsForConcatFile inputUrlInfo
 		
 		# Make sure we actually have some urls. We still want to generate an empty file if we
 		# don't, though.
@@ -198,25 +214,30 @@ command =
 		
 		for url in urls
 			urlInfo = @getUrlInfo url
+			input   = lib.fs.readFileSync(url).toString() # TODO: Probably need to check if the file exists.
 			
 			if urlInfo.plugin is currentChunk?.plugin
-				currentChunk.urls.push url
+				currentChunk.inputs.push input
 			else
-				currentChunk = { plugin: urlInfo.plugin, urls: [url] }
+				currentChunk = { plugin: urlInfo.plugin, inputs: [input] }
 				chunks.push currentChunk
 		
 		# Build each chunk.
-		chunkUrls       = []
-		builtChunkCount = 0
+		chunkOutputs = []
 		
-		for chunk, index in chunks
-			chunkFileName = inputUrlInfo.relativeUrl.replace(/\//g, "_")
-			chunkUrl      = "#{tempUrlInfo.url}_#{index}"
+		recursiveBuildChunk = (index) ->
+			chunk = chunks[index]
 			
-			chunkUrls.push chunkUrl
-			
-			chunk.plugin.buildFiles chunk.urls, chunkUrl, =>
-				(lib.squire.util.combineFiles(chunkUrls, outputUrlInfo.url); callback()) if ++builtChunkCount is chunks.length
+			chunk.plugin.renderContentList chunk.inputs, {}, (output) ->
+				chunkOutputs.push output
+				
+				if ++index < chunks.length
+					recursiveBuildChunk index
+				else
+					lib.fs.writeFileSync outputUrlInfo.url, chunkOutputs.join("\n\n")
+					callback()
+		
+		recursiveBuildChunk 0
 	
 	
 	# A helper that returns a list of URLs associated with the given concat file. They will be in

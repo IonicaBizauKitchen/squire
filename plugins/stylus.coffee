@@ -10,21 +10,22 @@ lib =
 	squire: require "../squire"
 	fs:     require "fs"
 
-class exports.Plugin extends lib.squire.BasePlugin
+class exports.Plugin extends lib.squire.SquirePlugin
 	inputExtensions: ["styl"]
 	outputExtension: "css"
 	
-	defaultConfig:
+	configDefaults:
 		useNib: true
 	
-	buildFile: (inputUrl, outputUrl, callback) ->
-		renderFunction = lib.stylus lib.fs.readFileSync(inputUrl).toString()
+	renderContent: (input, options, callback) ->
+		renderFunction = lib.stylus input
 		renderFunction.use(lib.nib()).import "nib" if @config.useNib
 		
 		renderFunction.render (error, css) =>
 			if error?
-				@logError "There was an error while compiling your Stylus file.", "In #{inputUrl}:\n\n#{error.message}"
+				message = error.message
+				message = "In #{options.url}:\n\n#{message}" if options.url?
+				@logError "There was an error while compiling your Stylus file.", message
+				callback null
 			else
-				lib.fs.writeFileSync outputUrl, css
-			
-			callback()
+				callback css
