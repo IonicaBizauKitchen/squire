@@ -37,11 +37,11 @@ class BuildCommand extends lib.squire.Squire
 	
 	# Gathers up all of the contents of the app directory into an object.
 	gatherContent: ->
-		@appContent = {}
+		@content = {}
 		
 		lib.file.walkSync @appPath, (path, directories, files) =>
 			relativePathComponents = path[@appPath.length + 1..].split "/"
-			directoryContent       = @appContent
+			directoryContent       = @content
 			
 			for component in relativePathComponents
 				directoryContent[component] = {} unless directoryContent[component]?

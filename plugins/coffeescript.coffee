@@ -8,10 +8,16 @@ lib =
 	fs:     require "fs"
 	squire: require "../squire"
 	coffee: require "coffee-script"
+	merge:  require "deepmerge"
 
 class exports.Plugin extends lib.squire.SquirePlugin
 	inputExtensions: ["coffee"]
 	outputExtension: "js"
+	
+	configDefaults:
+		global:
+			templatePlugin: "jade"
+			localsProperty: "locals"
 	
 	renderContent: (input, options, callback) ->
 		js = null
@@ -43,5 +49,34 @@ class exports.Plugin extends lib.squire.SquirePlugin
 				
 				callback null if invalidInputCount > 0 and invalidInputCount + validInputCount is inputs.length
 	
-	# TODO
-	# renderIndexContent: (input, options, callback) ->
+	renderIndexContent: (input, options, callback) ->
+		templatePlugin = @loadPlugin @config.templatePlugin
+		
+		if templatePlugin?
+			options.compilerOptions = lib.merge (options.compilerOptions or {}), { bare: true }
+			
+			@renderContent input, options, (js) =>
+				if js?
+					# TODO: We should send a copy of @content.
+					data = @evaluateIndexContent.call null, js, @content
+					
+					if data?.template?
+						localsProperty                  = @config.localsProperty
+						template                        = @loadFile data.template
+						templateOptions                 = { url: data.template }
+						templateOptions[localsProperty] = { data: data }
+						
+						templatePlugin.renderIndexContent template, templateOptions, callback
+					else
+						callback js
+				else
+					callback null
+		else
+			super
+	
+	# This is a pretty hacky way to provide some data to the user's code. We eval the compiled
+	# JavaScript so that any local variables are accessible to it. This has potential to cause some
+	# issues if the script starts modifying global data, but it doesn't have access to very much so
+	# the risk is pretty small.
+	evaluateIndexContent: (_js, content) ->
+		eval _js

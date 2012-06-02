@@ -20,7 +20,7 @@ class exports.Plugin extends lib.squire.SquirePlugin
 		try
 			compileFunction = lib.jade.compile input, { filename: options.url }
 			locals          = options.locals or {}
-			locals.content  = @appContent
+			locals.content  = @content
 			html            = compileFunction locals
 			callback html
 		catch error

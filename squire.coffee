@@ -65,8 +65,8 @@ class exports.Squire
 				throw error unless error.toString().indexOf("Error: Cannot find module") is 0
 		
 		if pluginModule?
-			plugin            = new pluginModule.Plugin pluginId, @mode
-			plugin.appContent = @appContent
+			plugin         = new pluginModule.Plugin pluginId, @mode
+			plugin.content = @content
 			plugin
 		else
 			null
