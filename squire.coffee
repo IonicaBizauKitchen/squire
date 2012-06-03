@@ -27,7 +27,9 @@ class exports.Squire
 		build:
 			minify: true
 	
-	constructor: (@mode = "build") ->
+	constructor: (options = {}) ->
+		@mode = options.mode or "build"
+		
 		# Gather up config values.
 		@projectPath   = process.env.PWD
 		userConfigPath = "#{@projectPath}/config/squire.cson"
@@ -65,8 +67,8 @@ class exports.Squire
 				throw error unless error.toString().indexOf("Error: Cannot find module") is 0
 		
 		if pluginModule?
-			plugin         = new pluginModule.Plugin pluginId, @mode
-			plugin.content = @content
+			plugin     = new pluginModule.Plugin id: pluginId, mode: @mode
+			plugin.app = @app
 			plugin
 		else
 			null
@@ -111,8 +113,9 @@ class exports.Squire
 class exports.SquirePlugin extends exports.Squire
 	configDefaults: {}
 	
-	constructor: (@id, @mode = "build") ->
-		super @mode
+	constructor: (options = {}) ->
+		super
+		@id = options.id
 		
 		# We add to the base config with our plugin-specific config.
 		userConfigPath = "#{@projectPath}/config/#{@id}.cson"
@@ -132,8 +135,8 @@ class exports.SquirePlugin extends exports.Squire
 			input = inputs[index]
 			url   = options.urls?[index]
 			
-			@renderContent input, (if url? then { url: url } else {}), (content) ->
-				result += "#{content}\n\n"
+			@renderContent input, (if url? then { url: url } else {}), (output) ->
+				result += "#{output}\n\n"
 				if ++index < inputs.length then recursiveRender index else callback result
 		
 		if inputs.length > 0 then recursiveRender 0 else callback null
@@ -144,7 +147,45 @@ class exports.SquirePlugin extends exports.Squire
 		@renderContent input, options, callback
 
 
-# The app content tree that gets passed in to plugins is comprised of instances of this class.
-# TODO: Implement this.
-class exports.ContentFile
-	constructor: (@fileName) ->
+# A class that represents a directory. The content tree is comprised of these and SquireFiles.
+class exports.SquireDirectory extends exports.Squire
+	constructor: (options = {}) ->
+		super
+		@path          = options.path
+		pathComponents = @path.split "/"
+		@name          = pathComponents[pathComponents.length - 1]
+		@directories   = {}
+		@files         = {}
+	
+	getPath: (path) ->
+		path = path[1..] while path[0] is "/"
+		
+		if path.length is 0
+			this
+		else
+			directory      = this
+			pathComponents = path.split "/"
+			
+			for component in pathComponents
+				directory = directory.directories[component]
+				break unless directory?
+			
+			directory
+	
+	walk: (callback) ->
+		callback this
+		directory.walk callback for name, directory of @directories
+
+
+# A class that represents a file. The content tree is comprised of these and SquireDirectories.
+class exports.SquireFile extends exports.Squire
+	constructor: (options = {}) ->
+		super
+		@url     = options.url
+		urlInfo  = @getUrlInfo @url
+		@name    = urlInfo.fileName
+		@plugin  = options.plugin
+		@content = options.content
+	
+	getRenderedContent: (callback) ->
+		@plugin.renderContent @content, {}, (output) -> callback output

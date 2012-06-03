@@ -29,34 +29,18 @@ class BuildCommand extends lib.squire.Squire
 			@logError "Configured input path #{@inputPath} does not exist."
 			return
 		
-		# Do the stuff to make the thing.
-		@gatherContent()
-		@loadPlugins()
-		@buildFiles()
-	
-	
-	# Gathers up all of the contents of the app directory into an object.
-	gatherContent: ->
-		@content = {}
+		# Initialize the app content tree.
+		@app = new lib.squire.SquireDirectory path: @appPath
 		
-		lib.file.walkSync @appPath, (path, directories, files) =>
-			relativePathComponents = path[@appPath.length + 1..].split "/"
-			directoryContent       = @content
-			
-			for component in relativePathComponents
-				directoryContent[component] = {} unless directoryContent[component]?
-				directoryContent = directoryContent[component]
-			
-			for fileName in files
-				continue if @config.ignoreHiddenFiles and fileName[0] is "."
-				
-				# TODO: Add more info here.
-				directoryContent[fileName] = new lib.squire.ContentFile
+		# Do the stuff to make the thing.
+		@loadPlugins()
+		@gatherAppContent()
+		@buildFiles()
 	
 	
 	# Loads all of the plugins specified by the user.
 	loadPlugins: ->
-		@defaultPlugin = new lib.squire.SquirePlugin "default"
+		@defaultPlugin = new lib.squire.SquirePlugin id: "default"
 		@plugins       = {}
 		
 		return unless @config.plugins?
@@ -73,6 +57,24 @@ class BuildCommand extends lib.squire.Squire
 				continue
 			
 			@plugins[extension] = plugin for extension in plugin.inputExtensions
+	
+	
+	# Gathers up all of the contents of the app directory.
+	gatherAppContent: ->
+		lib.file.walkSync @appPath, (path, directories, files) =>
+			relativePath   = path[@appPath.length + 1..]
+			currentContent = @app.getPath relativePath
+			
+			for directoryName in directories
+				currentContent.directories[directoryName] = new lib.squire.SquireDirectory path: "#{path}/#{directoryName}"
+			
+			for fileName in files
+				urlInfo = @getUrlInfo "#{path}/#{fileName}"
+				
+				currentContent.files[fileName] = new lib.squire.SquireFile
+					url:     urlInfo.url
+					plugin:  urlInfo.plugin
+					content: @loadFile urlInfo.url
 	
 	
 	# Runs through the content tree, building each file.
@@ -310,4 +312,4 @@ class BuildCommand extends lib.squire.Squire
 
 
 # We only expose the run function.
-exports.run = (options) -> (new BuildCommand options.mode).run options
+exports.run = (options) -> (new BuildCommand mode: options.mode).run options

@@ -9,6 +9,7 @@ lib =
 	squire: require "../squire"
 	coffee: require "coffee-script"
 	merge:  require "deepmerge"
+	_:      require "underscore"
 
 class exports.Plugin extends lib.squire.SquirePlugin
 	inputExtensions: ["coffee"]
@@ -24,12 +25,10 @@ class exports.Plugin extends lib.squire.SquirePlugin
 		
 		try
 			js = lib.coffee.compile input, options.compilerOptions or {}
-			callback js
 		catch error
-			message = error.toString().split("\n")[0]
-			message = "In #{options.url}:\n\n#{message}" if options.url?
-			@logError "There was an error while compiling your CoffeeScript:", message
-			callback null
+			@logCoffeeScriptError error, options.url
+		
+		callback js
 	
 	renderContentList: (inputs, options, callback) ->
 		# We first need to check for syntax errors. We have to do this as a separate step because
@@ -53,13 +52,19 @@ class exports.Plugin extends lib.squire.SquirePlugin
 		templatePlugin = @loadPlugin @config.templatePlugin
 		
 		if templatePlugin?
-			options.compilerOptions = lib.merge (options.compilerOptions or {}), { bare: true }
+			try
+				input = lib.coffee.eval input
+			catch error
+				@logCoffeeScriptError error, options.url
+				callback null
+				return
 			
-			@renderContent input, options, (js) =>
-				if js?
-					# TODO: We should send a copy of @content.
-					data = @evaluateIndexContent.call null, js, @content
-					
+			dataFunction = input.pageData or input.pageDataAsync
+			
+			if typeof(dataFunction) is "function"
+				functionType = if input.pageData? then "sync" else "async"
+				
+				done = (data) =>
 					if data?.template?
 						localsProperty                  = @config.localsProperty
 						template                        = @loadFile data.template
@@ -68,15 +73,18 @@ class exports.Plugin extends lib.squire.SquirePlugin
 						
 						templatePlugin.renderIndexContent template, templateOptions, callback
 					else
-						callback js
+						super
+				
+				if functionType is "sync"
+					done dataFunction(@app, lib._)
 				else
-					callback null
+					dataFunction @app, lib._, (data) => done data
+			else
+				super
 		else
 			super
 	
-	# This is a pretty hacky way to provide some data to the user's code. We eval the compiled
-	# JavaScript so that any local variables are accessible to it. This has potential to cause some
-	# issues if the script starts modifying global data, but it doesn't have access to very much so
-	# the risk is pretty small.
-	evaluateIndexContent: (_js, content) ->
-		eval _js
+	logCoffeeScriptError: (error, url) ->
+		message = error.toString().split("\n")[0]
+		message = "In #{url}:\n\n#{message}" if url?
+		@logError "There was an error while compiling your CoffeeScript:", message
