@@ -23,10 +23,8 @@ class exports.Plugin extends lib.squire.SquirePlugin
 		[markdown, data] = @parseInput input
 		
 		if data.constructor is Error
-			message = data.toString()
-			message = "In #{options.url}:\n\n#{message}" if options.url?
-			@logError "There was an error while parsing your Markdown file's CSON header data.", message
-			callback null
+			error = @logError "There was an error while parsing your Markdown file's CSON header data.", data.toString(), options.url
+			callback null, null, error
 		else
 			callback lib.markdown(markdown), data
 	
@@ -34,8 +32,10 @@ class exports.Plugin extends lib.squire.SquirePlugin
 		templatePlugin = @loadPlugin @config.templatePlugin
 		
 		if templatePlugin?
-			@renderContent input, options, (html, data) =>
-				if data?.template?
+			@renderContent input, options, (html, data, error) =>
+				if error?
+					callback null, null, error
+				else if data?.template?
 					localsProperty                  = @config.localsProperty
 					template                        = @loadFile data.template
 					templateOptions                 = { url: data.template }

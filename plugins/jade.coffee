@@ -21,10 +21,8 @@ class exports.Plugin extends lib.squire.SquirePlugin
 			compileFunction = lib.jade.compile input, { filename: options.url }
 		catch error
 			# TODO: Is it possible to get a line number from the error?
-			message = error.toString()
-			message = "In #{options.url}:\n\n#{message}" if options.url?
-			@logError "There was an error while compiling your Jade template.", message
-			callback null
+			error = @logError "There was an error while compiling your Jade template.", error.toString(), options.url
+			callback null, null, error
 			return
 		
 		locals     = options.locals or {}

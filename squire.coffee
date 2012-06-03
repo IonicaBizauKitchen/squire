@@ -79,34 +79,58 @@ class exports.Squire
 		url = lib.path.join basePath, url if url[0] isnt "/"
 		lib.fs.readFileSync(url).toString()
 	
-	# Prints a nicely-formatted error message.
-	logError: (explanation, message) ->
-		explanation = lib.colors.red "\u2718 #{explanation}"
+	# Prints a nicely-formatted error message. Also returns the error for further use.
+	logError: (message, details, url) ->
+		fancyMessage = lib.colors.red "\u2718 #{message}"
+		error        = "\n#{message}"
+		fancyError   = "\n#{fancyMessage}"
 		
-		if message?
-			message = message.replace /\n/g, "\n    "
-			console.log "\n#{explanation}\n\n    #{message}\n"
-		else
-			console.log "\n#{explanation}\n"
+		if details?
+			details    = "\n#{details}\n"
+			details    = "\nIn #{url}:\n#{details}" if url?
+			details    = details.replace /\n/g, "\n    "
+			error      += "\n#{details}"
+			fancyError += "\n#{details}"
+		else if url?
+			error      += " in #{url}"
+			fancyError += " in #{url}"
+		
+		console.log fancyError
+		error
 	
 	# A little helper function to gather up a bunch of useful information about a url.
 	getUrlInfo: (url, basePath = @appPath) ->
-		path         = lib.path.dirname url
-		fileName     = lib.path.basename url
-		extension    = lib.path.extname(fileName)[1..]
-		baseName     = fileName[0...fileName.length - extension.length - 1]
-		relativePath = path[basePath.length + 1..]
+		url                    = "#{basePath}/#{url}" unless url[0] is "/"
+		url                    = url[0..url.length - 2] if url[url.length - 1] is "/"
+		exists                 = lib.path.existsSync url
+		isDirectory            = if exists then lib.fs.lstatSync(url).isDirectory() else url.lastIndexOf("/") > url.lastIndexOf(".")
+		path                   = if isDirectory then url else lib.path.dirname url
+		pathComponents         = path.split("/")[1..]
+		relativePath           = path[basePath.length + 1..]
+		relativePathComponents = relativePath.split "/"
 		
-		url:                    url
-		fileName:               fileName
-		baseName:               fileName[0...fileName.length - extension.length - 1]
-		path:                   path
-		extension:              extension
-		fileNameComponents:     fileName.split "."
-		pathComponents:         path.split("/")[1..]
-		relativePath:           relativePath
-		relativeUrl:            if relativePath then "#{relativePath}/#{fileName}" else fileName
-		relativePathComponents: relativePath.split "/"
+		if isDirectory
+			url:                    url
+			baseName:               lib.path.basename url
+			components:             pathComponents
+			relativePath:           relativePath
+			relativePathComponents: relativePathComponents
+			isDirectory:            true
+		else
+			fileName  = lib.path.basename url
+			extension = lib.path.extname(fileName)[1..]
+			
+			url:                    url
+			fileName:               fileName
+			baseName:               fileName[0...fileName.length - extension.length - 1]
+			path:                   path
+			extension:              extension
+			fileNameComponents:     fileName.split "."
+			pathComponents:         pathComponents
+			relativePath:           relativePath
+			relativeUrl:            if relativePath then "#{relativePath}/#{fileName}" else fileName
+			relativePathComponents: relativePathComponents
+			isDirectory:            false
 
 
 # The base plugin class, to be extended by actual plugins.
@@ -129,21 +153,27 @@ class exports.SquirePlugin extends exports.Squire
 		callback input
 	
 	renderContentList: (inputs, options, callback) ->
-		result = ""
+		results = []
+		errors  = []
 		
 		recursiveRender = (index) =>
 			input = inputs[index]
 			url   = options.urls?[index]
 			
-			@renderContent input, (if url? then { url: url } else {}), (output) ->
-				result += "#{output}\n\n"
-				if ++index < inputs.length then recursiveRender index else callback result
+			@renderContent input, (if url? then { url: url } else {}), (output, data, error) ->
+				if error? then errors.push error else results.push output
+				
+				if ++index < inputs.length
+					recursiveRender index
+				else if errors.length > 0
+					callback null, null, errors.join("\n\n")
+				else
+					callback results.join("\n\n")
 		
-		if inputs.length > 0 then recursiveRender 0 else callback null
+		if inputs.length > 0 then recursiveRender 0 else callback ""
 	
 	renderIndexContent: (input, options, callback) ->
 		# By default, index files will be treated just like normal files.
-		# TODO: This is probably not good, because the output URL will have an HTML extension.
 		@renderContent input, options, callback
 
 

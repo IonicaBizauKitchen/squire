@@ -4,8 +4,8 @@
 	"author":      "Chromatic Labs (http://chromaticlabs.com/)",
 	"homepage":    "http://chromaticlabs.com/squire",
 	"bugs":        "https://github.com/jlong64/squire/issues",
-	"description": "Simple front-end build tools for static websites",
-	"keywords":    ["front-end", "build tools", "dependency management", "blog"],
+	"description": "Flexible front-end build tools",
+	"keywords":    ["dependency management", "blog", "static website"],
 	
 	"contributors": [
 		"Jarod Long <jarod@chromaticlabs.com> (http://jarodlong.com/)"
@@ -28,7 +28,8 @@
 		"deepmerge":     "*",
 		"colors":        "*",
 		"wrench":        "*",
-		"file":          "*"
+		"file":          "*",
+		"mime":          "*"
 	},
 	
 	"devDependencies": {

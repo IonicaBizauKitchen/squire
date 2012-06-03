@@ -79,6 +79,8 @@ class BuildCommand extends lib.squire.Squire
 	
 	# Runs through the content tree, building each file.
 	buildFiles: ->
+		errors = []
+		
 		# Start by counting the total number of files.
 		lib.file.walkSync @inputPath, (path, directories, files) =>
 			for fileName in files
@@ -105,8 +107,9 @@ class BuildCommand extends lib.squire.Squire
 					for fileName in files
 						continue if @config.ignoreHiddenFiles and fileName[0] is "."
 						
-						@buildFile "#{path}/#{fileName}", =>
-							@callback?() if ++builtFileCount is @totalFileCount
+						@buildFile "#{path}/#{fileName}", (error) =>
+							errors.push error if error?
+							@callback?(errors) if ++builtFileCount is @totalFileCount
 	
 	
 	# Builds the file at the given URL. The callback must be called whenever the file is done building.
@@ -120,9 +123,9 @@ class BuildCommand extends lib.squire.Squire
 			input          = lib.fs.readFileSync(inputUrlInfo.url).toString()
 			renderFunction = if inputUrlInfo.isIndexFile then "renderIndexContent" else "renderContent"
 			
-			inputUrlInfo.plugin[renderFunction] input, { url: url }, (output) ->
+			inputUrlInfo.plugin[renderFunction] input, { url: url }, (output, data, error) ->
 				lib.fs.writeFileSync outputUrlInfo.url, (output or "")
-				callback()
+				callback error
 	
 	
 	# A helper to build a concat file.
@@ -154,18 +157,24 @@ class BuildCommand extends lib.squire.Squire
 		
 		# Build each chunk.
 		chunkOutputs = []
+		errors       = []
 		
 		recursiveBuildChunk = (index) ->
 			chunk = chunks[index]
 			
-			chunk.plugin.renderContentList chunk.inputs, { urls: chunk.urls }, (output) ->
+			chunk.plugin.renderContentList chunk.inputs, { urls: chunk.urls }, (output, data, error) ->
 				chunkOutputs.push output if output?
+				errors.push       error  if error?
 				
 				if ++index < chunks.length
 					recursiveBuildChunk index
 				else
 					lib.fs.writeFileSync outputUrlInfo.url, chunkOutputs.join("\n\n")
-					callback()
+					
+					if errors.length > 0
+						callback errors.join("\n\n")
+					else
+						callback()
 		
 		recursiveBuildChunk 0
 	
