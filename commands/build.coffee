@@ -40,8 +40,9 @@ class BuildCommand extends lib.squire.Squire
 	
 	# Loads all of the plugins specified by the user.
 	loadPlugins: ->
-		@defaultPlugin = new lib.squire.SquirePlugin id: "default"
-		@plugins       = {}
+		@defaultPlugin          = new lib.squire.SquirePlugin id: "default"
+		@defaultPlugin.fileType = "binary"
+		@plugins                = {}
 		
 		return unless @config.plugins?
 		
@@ -120,7 +121,8 @@ class BuildCommand extends lib.squire.Squire
 		if inputUrlInfo.isConcatFile
 			@buildConcatFile inputUrlInfo, outputUrlInfo, callback
 		else
-			input          = lib.fs.readFileSync(inputUrlInfo.url).toString()
+			input          = lib.fs.readFileSync inputUrlInfo.url
+			input          = input.toString() if inputUrlInfo.plugin.fileType is "text"
 			renderFunction = if inputUrlInfo.isIndexFile then "renderIndexContent" else "renderContent"
 			
 			inputUrlInfo.plugin[renderFunction] input, { url: url }, (output, data, error) ->

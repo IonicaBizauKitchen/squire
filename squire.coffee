@@ -136,6 +136,7 @@ class exports.Squire
 # The base plugin class, to be extended by actual plugins.
 class exports.SquirePlugin extends exports.Squire
 	configDefaults: {}
+	fileType:       "text"
 	
 	constructor: (options = {}) ->
 		super
@@ -157,7 +158,7 @@ class exports.SquirePlugin extends exports.Squire
 		errors  = []
 		
 		recursiveRender = (index) =>
-			input = inputs[index]
+			input = inputs[index].toString()
 			url   = options.urls?[index]
 			
 			@renderContent input, (if url? then { url: url } else {}), (output, data, error) ->
