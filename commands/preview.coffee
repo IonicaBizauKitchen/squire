@@ -50,7 +50,7 @@ class PreviewCommand extends lib.squire.Squire
 			response.write lib.fs.readFileSync(urlInfo.url), "binary"
 		else
 			response.writeHead 404, "Content-Type": "text/plain"
-			response.write "404: File #{filename} not found."
+			response.write "404: File #{urlInfo.url} not found."
 		
 		response.end()
 	

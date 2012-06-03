@@ -33,15 +33,21 @@ class exports.Plugin extends lib.squire.SquirePlugin
 		
 		if templatePlugin?
 			@renderContent input, options, (html, data, error) =>
+				# TODO: Much of this is duplicated in the CoffeeScript module. Should share the code.
 				if error?
 					callback null, null, error
 				else if data?.template?
-					localsProperty                  = @config.localsProperty
-					template                        = @loadFile data.template
-					templateOptions                 = { url: data.template }
-					templateOptions[localsProperty] = { data: data, html: html }
+					localsProperty = @config.localsProperty
+					templateUrl    = "#{@appPath}/#{data.template}"
+					template       = @loadFile templateUrl
 					
-					templatePlugin.renderIndexContent template, templateOptions, callback
+					if template?
+						templateOptions                 = { url: templateUrl }
+						templateOptions[localsProperty] = { data: data, html: html }
+						templatePlugin.renderIndexContent template, templateOptions, callback
+					else
+						error = @logError "Template file does not exist at #{templateUrl}."
+						callback null, null, error
 				else
 					callback html, data
 		else

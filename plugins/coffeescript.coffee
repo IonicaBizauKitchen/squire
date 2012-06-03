@@ -68,12 +68,17 @@ class exports.Plugin extends lib.squire.SquirePlugin
 				
 				done = (data) =>
 					if data?.template?
-						localsProperty                  = @config.localsProperty
-						template                        = @loadFile data.template
-						templateOptions                 = { url: data.template }
-						templateOptions[localsProperty] = { data: data }
+						localsProperty = @config.localsProperty
+						templateUrl    = "#{@appPath}/#{data.template}"
+						template       = @loadFile data.template
 						
-						templatePlugin.renderIndexContent template, templateOptions, callback
+						if template?
+							templateOptions                 = { url: templateUrl }
+							templateOptions[localsProperty] = { data: data }
+							templatePlugin.renderIndexContent template, templateOptions, callback
+						else
+							error = @logError "Template file does not exist at #{templateUrl}."
+							callback null, null, error
 					else
 						super
 				

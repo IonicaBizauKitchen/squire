@@ -77,7 +77,11 @@ class exports.Squire
 	# accept both absolute URLs and URLs relative to a particular base path.
 	loadFile: (url, basePath = @appPath) ->
 		url = lib.path.join basePath, url if url[0] isnt "/"
-		lib.fs.readFileSync(url).toString()
+		
+		if lib.path.existsSync url
+			lib.fs.readFileSync(url).toString()
+		else
+			null
 	
 	# Prints a nicely-formatted error message. Also returns the error for further use.
 	logError: (message, details, url) ->
@@ -86,7 +90,7 @@ class exports.Squire
 		fancyError   = "\n#{fancyMessage}"
 		
 		if details?
-			details    = "\n#{details}\n"
+			details    = "\n#{details}"
 			details    = "\nIn #{url}:\n#{details}" if url?
 			details    = details.replace /\n/g, "\n    "
 			error      += "\n#{details}"
@@ -94,6 +98,9 @@ class exports.Squire
 		else if url?
 			error      += " in #{url}"
 			fancyError += " in #{url}"
+		
+		error      += "\n"
+		fancyError += "\n"
 		
 		console.log fancyError
 		error
