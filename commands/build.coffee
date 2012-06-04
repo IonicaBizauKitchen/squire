@@ -121,12 +121,12 @@ class BuildCommand extends lib.squire.Squire
 		if inputUrlInfo.isConcatFile
 			@buildConcatFile inputUrlInfo, outputUrlInfo, callback
 		else
-			input          = lib.fs.readFileSync inputUrlInfo.url
+			input          = lib.fs.readFileSync url
 			input          = input.toString() if inputUrlInfo.plugin.fileType is "text"
 			renderFunction = if inputUrlInfo.isIndexFile then "renderIndexContent" else "renderContent"
 			
-			inputUrlInfo.plugin[renderFunction] input, { url: url }, (output, data, error) ->
-				lib.fs.writeFileSync outputUrlInfo.url, (output or "")
+			inputUrlInfo.plugin[renderFunction] input, { url: url }, (output = "", data = {}, error) =>
+				lib.fs.writeFileSync outputUrlInfo.url, output
 				callback error
 	
 	

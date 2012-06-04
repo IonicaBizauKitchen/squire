@@ -201,14 +201,16 @@ class exports.SquireDirectory extends exports.Squire
 		if path.length is 0
 			this
 		else
-			directory      = this
+			node           = this
 			pathComponents = path.split "/"
 			
-			for component in pathComponents
-				directory = directory.directories[component]
-				break unless directory?
+			for component, index in pathComponents
+				nextNode = node.directories[component]
+				nextNode = node.files[component] if not nextNode? and index is pathComponents.length - 1
+				node     = nextNode
+				break unless node?
 			
-			directory
+			node
 	
 	walk: (callback) ->
 		callback this
