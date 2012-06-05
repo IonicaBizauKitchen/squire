@@ -185,7 +185,7 @@ class exports.SquirePlugin extends exports.Squire
 		@renderContent input, options, callback
 
 
-# A class that represents a directory. The content tree is comprised of these and SquireFiles.
+# A class that represents a directory. The app tree is comprised of these and SquireFiles.
 class exports.SquireDirectory extends exports.Squire
 	constructor: (options = {}) ->
 		super
@@ -217,7 +217,7 @@ class exports.SquireDirectory extends exports.Squire
 		directory.walk callback for name, directory of @directories
 
 
-# A class that represents a file. The content tree is comprised of these and SquireDirectories.
+# A class that represents a file. The app tree is comprised of these and SquireDirectories.
 class exports.SquireFile extends exports.Squire
 	constructor: (options = {}) ->
 		super
@@ -226,6 +226,3 @@ class exports.SquireFile extends exports.Squire
 		@name    = urlInfo.fileName
 		@plugin  = options.plugin
 		@content = options.content
-	
-	getRenderedContent: (callback) ->
-		@plugin.renderContent @content, {}, (output) -> callback output
