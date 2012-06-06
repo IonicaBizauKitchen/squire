@@ -80,12 +80,18 @@ class exports.Squire
 		url = lib.path.join basePath, url if url[0] isnt "/"
 		
 		if lib.path.existsSync url
-			lib.fs.readFileSync(url).toString()
+			lib.fs.readFileSync url
 		else
 			null
 	
-	# Prints a nicely-formatted error message. Also returns the error for further use.
-	logError: (message, details, url) ->
+	# The same as above, but will automatically convert the loaded file to a string. This is useful
+	# if you know that the file you're loading is a text file and not binary like an image.
+	loadTextFile: (url, basePath = @appPath) ->
+		@loadFile(url, basePath).toString()
+	
+	# Creates a nicely formatted error message and returns it. Plugins use this to create an error
+	# that they bubble up to the build process.
+	createError: (message, details, url) ->
 		fancyMessage = lib.colors.red "\u2718 #{message}"
 		error        = "\n#{message}"
 		fancyError   = "\n#{fancyMessage}"
@@ -103,8 +109,11 @@ class exports.Squire
 		error      += "\n"
 		fancyError += "\n"
 		
-		console.log fancyError
-		error
+		{ plainMessage: error, fancyMessage: fancyError }
+	
+	# A convenience function for logging an error created by the above function.
+	logError: (message, details, url) ->
+		console.log @createError(message, details, url).fancyMessage
 	
 	# A little helper function to gather up a bunch of useful information about a url.
 	getUrlInfo: (url, basePath = @appPath) ->
@@ -182,8 +191,12 @@ class exports.SquirePlugin extends exports.Squire
 		if inputs.length > 0 then recursiveRender 0 else callback ""
 	
 	renderIndexContent: (input, options, callback) ->
-		# By default, index files will be treated just like normal files.
+		# By default, index content will be treated just like normal content.
 		@renderContent input, options, callback
+	
+	renderAppTreeContent: (input, options, callback) ->
+		# By default, the raw input of each file goes into the app tree.
+		callback input
 
 
 # A class that represents a directory. The app tree is comprised of these and SquireFiles.
@@ -222,8 +235,8 @@ class exports.SquireDirectory extends exports.Squire
 class exports.SquireFile extends exports.Squire
 	constructor: (options = {}) ->
 		super
-		@url     = options.url
-		urlInfo  = @getUrlInfo @url
+		@path    = options.url
+		urlInfo  = @getUrlInfo @path
 		@name    = urlInfo.fileName
 		@plugin  = options.plugin
 		@content = options.content

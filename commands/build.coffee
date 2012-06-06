@@ -11,14 +11,14 @@ lib =
 	exec:   require("child_process").exec
 	file:   require "file"
 	wrench: require "wrench"
+	colors: require "colors"
 	squire: require "../squire"
 
 
 class BuildCommand extends lib.squire.Squire
 	# The entry point to the command.
 	run: (options) ->
-		@callback       = options.callback
-		@totalFileCount = 0
+		@totalFileCount = @inputFileCount = 0
 		
 		# Make sure we've got our directories set up properly.
 		unless lib.path.existsSync @appPath
@@ -32,14 +32,19 @@ class BuildCommand extends lib.squire.Squire
 		# Initialize the app content tree.
 		@app = new lib.squire.SquireDirectory path: @appPath
 		
+		# Count the total number of files.
+		lib.file.walkSync @appPath, (path, directories, files) =>
+			for fileName in files
+				continue if @config.ignoreHiddenFiles and fileName[0] is "."
+				@totalFileCount++
+				@inputFileCount++ if path.indexOf(@inputPath) is 0
+		
 		# Do the stuff to make the thing.
-		@loadPlugins()
-		@gatherAppContent()
-		@buildFiles()
+		@loadPlugins => @constructAppTree => @buildFiles (errors) => options.callback?(errors)
 	
 	
 	# Loads all of the plugins specified by the user.
-	loadPlugins: ->
+	loadPlugins: (callback) ->
 		@defaultPlugin          = new lib.squire.SquirePlugin id: "default"
 		@defaultPlugin.fileType = "binary"
 		@plugins                = {}
@@ -58,34 +63,44 @@ class BuildCommand extends lib.squire.Squire
 				continue
 			
 			@plugins[extension] = plugin for extension in plugin.inputExtensions
+		
+		callback?()
 	
 	
-	# Gathers up all of the contents of the app directory.
-	gatherAppContent: ->
+	# Constructs the app tree from all the files in the app directory.
+	constructAppTree: (callback) ->
+		builtFileCount = 0
+		
 		lib.file.walkSync @appPath, (path, directories, files) =>
 			relativePath   = path[@appPath.length + 1..]
 			currentContent = @app.getPath relativePath
+			isInputPath    = path.indexOf(@inputPath) is 0
 			
 			for directoryName in directories
+				continue if @config.ignoreHiddenFiles and directoryName[0] is "."
 				currentContent.directories[directoryName] = new lib.squire.SquireDirectory path: "#{path}/#{directoryName}"
 			
 			for fileName in files
-				urlInfo = @getUrlInfo "#{path}/#{fileName}"
+				continue if @config.ignoreHiddenFiles and fileName[0] is "."
 				
-				currentContent.files[fileName] = new lib.squire.SquireFile
-					url:     urlInfo.url
-					plugin:  urlInfo.plugin
-					content: @loadFile urlInfo.url
+				# TODO: There's a lot of duplicate code between here and buildFile.
+				url     = "#{path}/#{fileName}"
+				urlInfo = @getUrlInfo url
+				input   = if urlInfo.plugin.fileType is "text" then @loadTextFile url else @loadFile url
+				
+				file = currentContent.files[fileName] = new lib.squire.SquireFile
+					url:    urlInfo.url
+					plugin: urlInfo.plugin
+				
+				file.plugin.renderAppTreeContent input, { url: urlInfo.url }, (output = "", data = {}, error) =>
+					file.content = if error? then error.plainMessage else output
+					file.data    = data
+					callback?() if ++builtFileCount is @totalFileCount
 	
 	
 	# Runs through the content tree, building each file.
-	buildFiles: ->
+	buildFiles: (callback) ->
 		errors = []
-		
-		# Start by counting the total number of files.
-		lib.file.walkSync @inputPath, (path, directories, files) =>
-			for fileName in files
-				@totalFileCount++ unless @config.ignoreHiddenFiles and fileName[0] is "."
 		
 		# Clean the build folder. Since we're going to be running rm -rf, we do a little bit of
 		# sanity checking to help prevent catastrophic occurrences.
@@ -110,7 +125,10 @@ class BuildCommand extends lib.squire.Squire
 						
 						@buildFile "#{path}/#{fileName}", (error) =>
 							errors.push error if error?
-							@callback?(errors) if ++builtFileCount is @totalFileCount
+							
+							if ++builtFileCount is @inputFileCount
+								console.log error.fancyMessage for error in errors
+								callback?(errors)
 	
 	
 	# Builds the file at the given URL. The callback must be called whenever the file is done building.
@@ -121,8 +139,7 @@ class BuildCommand extends lib.squire.Squire
 		if inputUrlInfo.isConcatFile
 			@buildConcatFile inputUrlInfo, outputUrlInfo, callback
 		else
-			input          = lib.fs.readFileSync url
-			input          = input.toString() if inputUrlInfo.plugin.fileType is "text"
+			input          = if inputUrlInfo.plugin.fileType is "text" then @loadTextFile url else @loadFile url
 			renderFunction = if inputUrlInfo.isIndexFile then "renderIndexContent" else "renderContent"
 			
 			inputUrlInfo.plugin[renderFunction] input, { url: url }, (output = "", data = {}, error) =>
@@ -148,7 +165,7 @@ class BuildCommand extends lib.squire.Squire
 		
 		for url in urls
 			urlInfo = @getUrlInfo url, @inputPath
-			input   = lib.fs.readFileSync(url).toString() # TODO: Probably need to check if the file exists.
+			input   = @loadTextFile url
 			
 			if urlInfo.plugin is currentChunk?.plugin
 				currentChunk.inputs.push input

@@ -15,17 +15,20 @@ class exports.Plugin extends lib.squire.SquirePlugin
 	outputExtension: "html"
 	
 	renderContent: (input, options, callback) ->
-		compileFunction = null
+		html = null
 		
 		try
 			compileFunction = lib.jade.compile input, { filename: options.url }
+			locals          = options?.locals or {}
+			locals.app      = @app
+			html            = compileFunction locals
 		catch error
 			# TODO: Is it possible to get a line number from the error?
-			error = @logError "There was an error while compiling your Jade template.", error.toString(), options.url
+			error = @createError "There was an error while compiling your Jade template.", error.toString(), options.url
 			callback null, null, error
 			return
 		
-		locals     = options.locals or {}
-		locals.app = @app
-		html       = compileFunction locals
 		callback html
+	
+	renderAppTreeContent: (input, options, callback) ->
+		@renderContent input, options, callback

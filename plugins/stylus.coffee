@@ -24,7 +24,7 @@ class exports.Plugin extends lib.squire.SquirePlugin
 		
 		renderFunction.render (error, css) =>
 			if error?
-				error = @logError "There was an error while compiling your Stylus file.", error.message, options.url
+				error = @createError "There was an error while compiling your Stylus file.", error.message, options.url
 				callback null, null, error
 			else
 				callback css

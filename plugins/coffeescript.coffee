@@ -27,7 +27,7 @@ class exports.Plugin extends lib.squire.SquirePlugin
 		try
 			js = lib.coffee.compile input, options.compilerOptions or {}
 		catch compileError
-			error = @logCoffeeScriptError compileError, options.url
+			error = @createCoffeeScriptError compileError, options.url
 		
 		callback js, null, error
 	
@@ -57,7 +57,7 @@ class exports.Plugin extends lib.squire.SquirePlugin
 			try
 				input = lib.coffee.eval input
 			catch error
-				error = @logCoffeeScriptError error, options.url
+				error = @createCoffeeScriptError error, options.url
 				callback null, null, error
 				return
 			
@@ -70,14 +70,14 @@ class exports.Plugin extends lib.squire.SquirePlugin
 					if data?.template?
 						localsProperty = @config.localsProperty
 						templateUrl    = "#{@appPath}/#{data.template}"
-						template       = @loadFile data.template
+						template       = @loadTextFile data.template
 						
 						if template?
 							templateOptions                 = { url: templateUrl }
 							templateOptions[localsProperty] = { data: data }
 							templatePlugin.renderIndexContent template, templateOptions, callback
 						else
-							error = @logError "Template file does not exist at #{templateUrl}."
+							error = @createError "Template file does not exist at #{templateUrl}."
 							callback null, null, error
 					else
 						super
@@ -91,6 +91,6 @@ class exports.Plugin extends lib.squire.SquirePlugin
 		else
 			super
 	
-	logCoffeeScriptError: (error, url) ->
+	createCoffeeScriptError: (error, url) ->
 		message = error.toString().split("\n")[0]
-		@logError "There was an error while compiling your CoffeeScript:", message, url
+		@createError "There was an error while compiling your CoffeeScript:", message, url
