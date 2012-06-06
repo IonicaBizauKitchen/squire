@@ -22,6 +22,7 @@ class exports.Squire
 			inputDirectory:    "content"
 			outputDirectory:   "build"
 			ignoreHiddenFiles: true
+			plugins:           []
 		preview:
 			minify: false
 		build:
