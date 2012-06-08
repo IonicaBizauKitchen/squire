@@ -92,15 +92,15 @@ class BuildCommand extends lib.squire.Squire
 					url:    urlInfo.url
 					plugin: urlInfo.plugin
 				
-				file.plugin.renderAppTreeContent input, { url: urlInfo.url }, (output = "", data = {}, error) =>
-					file.content = if error? then error.plainMessage else output
+				file.plugin.renderAppTreeContent input, { url: urlInfo.url }, (output = "", data = {}, errors) =>
+					file.content = if errors? then @consolidateErrors(errors, "plain") else output
 					file.data    = data
 					callback?() if ++builtFileCount is @totalFileCount
 	
 	
 	# Runs through the content tree, building each file.
 	buildFiles: (callback) ->
-		errors = []
+		allErrors = []
 		
 		# Clean the build folder. Since we're going to be running rm -rf, we do a little bit of
 		# sanity checking to help prevent catastrophic occurrences.
@@ -123,12 +123,12 @@ class BuildCommand extends lib.squire.Squire
 					for fileName in files
 						continue if @config.ignoreHiddenFiles and fileName[0] is "."
 						
-						@buildFile "#{path}/#{fileName}", (error) =>
-							errors.push error if error?
+						@buildFile "#{path}/#{fileName}", (errors = []) =>
+							allErrors = allErrors.concat errors
 							
 							if ++builtFileCount is @inputFileCount
-								console.log error.fancyMessage for error in errors
-								callback?(errors)
+								console.log error.fancyMessage for error in allErrors
+								callback?(allErrors)
 	
 	
 	# Builds the file at the given URL. The callback must be called whenever the file is done building.
@@ -142,9 +142,9 @@ class BuildCommand extends lib.squire.Squire
 			input          = if inputUrlInfo.plugin.fileType is "text" then @loadTextFile url else @loadFile url
 			renderFunction = if inputUrlInfo.isIndexFile then "renderIndexContent" else "renderContent"
 			
-			inputUrlInfo.plugin[renderFunction] input, { url: url }, (output = "", data = {}, error) =>
+			inputUrlInfo.plugin[renderFunction] input, { url: url }, (output = "", data = {}, errors = []) =>
 				lib.fs.writeFileSync outputUrlInfo.url, output
-				callback error
+				callback errors
 	
 	
 	# A helper to build a concat file.
@@ -176,22 +176,22 @@ class BuildCommand extends lib.squire.Squire
 		
 		# Build each chunk.
 		chunkOutputs = []
-		errors       = []
+		allErrors    = []
 		
 		recursiveBuildChunk = (index) ->
 			chunk = chunks[index]
 			
-			chunk.plugin.renderContentList chunk.inputs, { urls: chunk.urls }, (output, data, error) ->
+			chunk.plugin.renderContentList chunk.inputs, { urls: chunk.urls }, (output, data, errors = []) ->
 				chunkOutputs.push output if output?
-				errors.push       error  if error?
+				allErrors = allErrors.concat errors
 				
 				if ++index < chunks.length
 					recursiveBuildChunk index
 				else
 					lib.fs.writeFileSync outputUrlInfo.url, chunkOutputs.join("\n\n")
 					
-					if errors.length > 0
-						callback errors.join("\n\n")
+					if allErrors.length > 0
+						callback allErrors
 					else
 						callback()
 		

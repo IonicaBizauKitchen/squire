@@ -24,8 +24,7 @@ class exports.Plugin extends lib.squire.SquirePlugin
 			html            = compileFunction locals
 		catch error
 			# TODO: Is it possible to get a line number from the error?
-			error = @createError "There was an error while compiling your Jade template.", error.toString(), options.url
-			callback null, null, error
+			callback null, null, [@createError "There was an error while compiling your Jade template.", error.toString(), options.url]
 			return
 		
 		callback html

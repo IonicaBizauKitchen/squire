@@ -56,11 +56,8 @@ class PreviewCommand extends lib.squire.Squire
 	
 	# Takes in a list of errors generated during the build process and serves them with a 500.
 	serveErrors: (request, response, errors) ->
-		errorString  = ""
-		errorString += "#{error.plainMessage}\n\n" for error in errors
-		
 		response.writeHead 500, "Content-Type": "text/plain"
-		response.write errorString
+		response.write @consolidateErrors errors, "plain"
 		response.end()
 
 # We only expose the run function.

@@ -21,15 +21,15 @@ class exports.Plugin extends lib.squire.SquirePlugin
 			localsProperty: "locals"
 	
 	renderContent: (input, options, callback) ->
-		js    = null
-		error = null
+		js     = null
+		errors = null
 		
 		try
 			js = lib.coffee.compile input, options.compilerOptions or {}
 		catch compileError
-			error = @createCoffeeScriptError compileError, options.url
+			errors = [@createCoffeeScriptError compileError, options.url]
 		
-		callback js, null, error
+		callback js, null, errors
 	
 	renderContentList: (inputs, options, callback) ->
 		# We first need to check for syntax errors. We have to do this as a separate step because
@@ -46,7 +46,7 @@ class exports.Plugin extends lib.squire.SquirePlugin
 				
 				if ++builtFileCount is inputs.length
 					if errors.length > 0
-						callback null, null, errors.join("\n\n")
+						callback null, null, errors
 					else
 						@renderContent inputs.join("\n\n"), options, callback
 	
@@ -57,8 +57,7 @@ class exports.Plugin extends lib.squire.SquirePlugin
 			try
 				input = lib.coffee.eval input
 			catch error
-				error = @createCoffeeScriptError error, options.url
-				callback null, null, error
+				callback null, null, [@createCoffeeScriptError error, options.url]
 				return
 			
 			dataFunction = input.pageData or input.pageDataAsync
@@ -77,8 +76,7 @@ class exports.Plugin extends lib.squire.SquirePlugin
 							templateOptions[localsProperty] = { data: data }
 							templatePlugin.renderIndexContent template, templateOptions, callback
 						else
-							error = @createError "Template file does not exist at #{templateUrl}."
-							callback null, null, error
+							callback null, null, [@createError "Template file does not exist at #{templateUrl}."]
 					else
 						super
 				

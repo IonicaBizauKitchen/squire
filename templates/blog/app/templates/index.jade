@@ -1,0 +1,22 @@
+extends layout
+
+block content
+	each article in data.articles
+		article.clearfix
+			header
+				h1: a(href="/articles/#{article.data.id}")= article.data.title
+				time= article.data.date
+			
+			.content
+				if article.data.image
+					a(href="/articles/#{article.data.id}")
+						img.intro-image(src="#{article.data.image}")
+				
+				if article.data.sections.intro
+					!= article.data.sections.intro
+					
+					if article.data.sections.more
+						.read-more
+							a(href="/articles/#{article.data.id}") Read more
+				else
+					!= article.content

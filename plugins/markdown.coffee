@@ -24,8 +24,7 @@ class exports.Plugin extends lib.squire.SquirePlugin
 		[markdown, data] = @parseInput input
 		
 		if data.constructor is Error
-			error = @createError "There was an error while parsing your Markdown file's CSON header data.", data.toString(), options.url
-			callback null, null, error
+			callback null, null, [@createError "There was an error while parsing your Markdown file's CSON header data.", data.toString(), options.url]
 		else
 			callback lib.markdown(markdown), data
 	
@@ -33,10 +32,10 @@ class exports.Plugin extends lib.squire.SquirePlugin
 		templatePlugin = @loadPlugin @config.templatePlugin
 		
 		if templatePlugin?
-			@renderContent input, options, (html, data, error) =>
+			@renderContent input, options, (html, data, errors) =>
 				# TODO: Much of this is duplicated in the CoffeeScript module. Should share the code.
-				if error?
-					callback null, null, error
+				if errors?.length > 0
+					callback null, null, errors
 				else if data?.template?
 					localsProperty = @config.localsProperty
 					templateUrl    = "#{@appPath}/#{data.template}"
@@ -47,8 +46,7 @@ class exports.Plugin extends lib.squire.SquirePlugin
 						templateOptions[localsProperty] = { data: data, html: html }
 						templatePlugin.renderIndexContent template, templateOptions, callback
 					else
-						error = @createError "Template file does not exist at #{templateUrl}."
-						callback null, null, error
+						callback null, null, [@createError "Template file does not exist at #{templateUrl}."]
 				else
 					callback html, data
 		else

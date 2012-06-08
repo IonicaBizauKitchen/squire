@@ -1,0 +1,22 @@
+doctype html
+
+html
+	head
+		title
+			block title
+				| My Cool Blog
+		
+		link(rel="stylesheet", href="/app.css")
+	
+	body
+		block header
+			.navbar.navbar-fixed-top
+				.navbar-inner
+					.container
+						a.brand(href="/") My Cool Blog
+		
+		.container.main-container
+			block content
+			
+			block footer
+				footer &copy; Some dude
