@@ -9,6 +9,8 @@
 
 lib =
 	nomnom: require "nomnom"
+	fs:     require "fs"
+	path:   require "path"
 
 commands =
 	new:     require "../commands/new"
@@ -18,6 +20,14 @@ commands =
 
 # A little hack to print help when the command is run with no arguments.
 process.argv[2] = "-h" if process.argv.length < 3
+
+
+# A helper function to grab the list of available templates.
+getTemplateList = ->
+	templatePath = lib.path.join __dirname, "../templates"
+	templates    = (path for path in lib.fs.readdirSync(templatePath) when path[0] isnt ".")
+	templates.join ", "
+
 
 # Configure nomnom and set up our commands.
 lib.nomnom.script("squire").colors()
@@ -31,8 +41,8 @@ lib.nomnom.command("new").
 			default: "."
 		template:
 			abbr:    "t"
-			help:    "The template to use for the project."
-			default: "blog"
+			help:    "The template to use for the project. Available templates: #{getTemplateList()}"
+			default: "basic"
 	).
 	callback (options) -> commands.new.run options
 

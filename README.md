@@ -23,7 +23,7 @@ You can then initialize a new project.
 squire new path/to/project
 ```
 
-You may use the `-t` option to change the project template. *TODO: List the templates.*
+You may use the `-t` option to change the project template. Run `squire new -h` to see a list of available templates.
 
 Once that's done you're ready to start up a preview server.
 

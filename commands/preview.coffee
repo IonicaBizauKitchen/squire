@@ -15,6 +15,7 @@ lib =
 commands =
 	build: require "./build"
 
+
 class PreviewCommand extends lib.squire.Squire
 	# The entry point to the command.
 	run: (options) ->
