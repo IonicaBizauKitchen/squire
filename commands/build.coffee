@@ -30,7 +30,7 @@ class BuildCommand extends lib.squire.Squire
 			return
 		
 		# Initialize the app content tree.
-		@app = new lib.squire.SquireDirectory path: @appPath
+		@app = new lib.squire.SquireDirectory path: "/", publicPath: null
 		
 		# Count the total number of files.
 		lib.file.walkSync @appPath, (path, directories, files) =>
@@ -78,19 +78,24 @@ class BuildCommand extends lib.squire.Squire
 			
 			for directoryName in directories
 				continue if @config.ignoreHiddenFiles and directoryName[0] is "."
-				currentContent.directories[directoryName] = new lib.squire.SquireDirectory path: "#{path}/#{directoryName}"
+				
+				urlInfo = @getUrlInfo "#{path}/#{directoryName}"
+				
+				currentContent.directories[directoryName] = new lib.squire.SquireDirectory
+					path:       "/#{urlInfo.relativePath}"
+					publicPath: if isInputPath then urlInfo.url[@inputPath.length..] else null
 			
 			for fileName in files
 				continue if @config.ignoreHiddenFiles and fileName[0] is "."
 				
-				# TODO: There's a lot of duplicate code between here and buildFile.
 				url     = "#{path}/#{fileName}"
 				urlInfo = @getUrlInfo url
 				input   = if urlInfo.plugin.fileType is "text" then @loadTextFile url else @loadFile url
 				
 				file = currentContent.files[fileName] = new lib.squire.SquireFile
-					url:    urlInfo.url
-					plugin: urlInfo.plugin
+					path:       "/#{urlInfo.relativeUrl}"
+					publicPath: if isInputPath then urlInfo.url[@inputPath.length..] else null
+					plugin:     urlInfo.plugin
 				
 				file.plugin.renderAppTreeContent input, { url: urlInfo.url }, (output = "", data = {}, errors) =>
 					file.content = if errors? then @consolidateErrors(errors, "plain") else output
@@ -321,10 +326,13 @@ class BuildCommand extends lib.squire.Squire
 	
 	# We override this function to add some additional information about the URL.
 	getUrlInfo: (url, basePath = @appPath) ->
-		info              = super
-		info.isConcatFile = info.fileNameComponents[info.fileNameComponents.length - 2] is "concat"
-		info.isIndexFile  = info.baseName is "index"
-		info.plugin       = @plugins[info.extension] or @defaultPlugin
+		info = super
+		
+		unless info.isDirectory
+			info.isConcatFile = info.fileNameComponents[info.fileNameComponents.length - 2] is "concat"
+			info.isIndexFile  = info.baseName is "index"
+			info.plugin       = @plugins[info.extension] or @defaultPlugin
+		
 		info
 	
 	

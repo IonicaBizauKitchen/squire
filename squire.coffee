@@ -212,6 +212,7 @@ class exports.SquireDirectory extends exports.Squire
 	constructor: (options = {}) ->
 		super
 		@path          = options.path
+		@publicPath    = options.publicPath
 		pathComponents = @path.split "/"
 		@name          = pathComponents[pathComponents.length - 1]
 		@directories   = {}
@@ -243,8 +244,9 @@ class exports.SquireDirectory extends exports.Squire
 class exports.SquireFile extends exports.Squire
 	constructor: (options = {}) ->
 		super
-		@path    = options.url
-		urlInfo  = @getUrlInfo @path
-		@name    = urlInfo.fileName
-		@plugin  = options.plugin
-		@content = options.content
+		@path       = options.path
+		@publicPath = options.publicPath
+		urlInfo     = @getUrlInfo @path
+		@name       = urlInfo.fileName
+		@plugin     = options.plugin
+		@content    = options.content
