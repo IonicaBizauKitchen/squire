@@ -182,7 +182,12 @@ The tree is made up of SquireDirectories and SquireFiles, which are documented b
 	<tr>
 		<td>path</td>
 		<td>String</td>
-		<td>The path to the directory relative to the `app` directory.</td>
+		<td>The path to the directory relative to the app directory.</td>
+	</tr>
+	<tr>
+		<td>publicPath</td>
+		<td>String</td>
+		<td>If this is a content directory (i.e., it's inside the app/content directory), this will be the path to the directory relative to the build directory, otherwise it will be null.</td>
 	</tr>
 	<tr>
 		<td>files</td>
@@ -207,7 +212,7 @@ The tree is made up of SquireDirectories and SquireFiles, which are documented b
 		<td>walk</td>
 		<td>Function</td>
 		<td>
-			A function that will recursively iterate through all of the directory's subdirectories, calling a callback for each one. i.e.:
+			A function that will synchronously, recursively iterate through all of the directory's subdirectories, calling a callback for each one. i.e.:
 			
 			<code>app.walk (directory) -> # Do something with each directory.</code>
 		</td>
@@ -230,7 +235,12 @@ The tree is made up of SquireDirectories and SquireFiles, which are documented b
 	<tr>
 		<td>path</td>
 		<td>String</td>
-		<td>The path to the file relative to the `app` directory.</td>
+		<td>The path to the file relative to the app directory.</td>
+	</tr>
+	<tr>
+		<td>publicPath</td>
+		<td>String</td>
+		<td>If this is a content file (i.e., it's inside the app/content directory), this will be the path to the compiled file relative to the build directory, otherwise it will be null. In other words, this will be the URL to the publicly-accessible file after the project is built, relative to the project root.</td>
 	</tr>
 	<tr>
 		<td>content</td>
