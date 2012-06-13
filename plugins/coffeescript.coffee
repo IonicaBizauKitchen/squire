@@ -35,18 +35,18 @@ class exports.Plugin extends lib.squire.SquirePlugin
 		# We first need to check for syntax errors. We have to do this as a separate step because
 		# when we actually compile our source, we are compiling a combined file, which causes us to
 		# lose filename and line number information when we have syntax errors.
-		errors         = []
+		allErrors      = []
 		builtFileCount = 0
 		
 		for input, index in inputs
 			url = options.urls?[index]
 			
-			@renderContent input, (if url? then { url: url } else {}), (output, data, error) =>
-				errors.push error if error?
+			@renderContent input, (if url? then { url: url } else {}), (output, data, errors = []) =>
+				allErrors = allErrors.concat errors
 				
 				if ++builtFileCount is inputs.length
-					if errors.length > 0
-						callback null, null, errors
+					if allErrors.length > 0
+						callback null, null, allErrors
 					else
 						@renderContent inputs.join("\n\n"), options, callback
 	
