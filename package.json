@@ -29,7 +29,9 @@
 		"colors":        "*",
 		"wrench":        "*",
 		"file":          "*",
-		"mime":          "*"
+		"mime":          "*",
+		"uglify-js":     "*",
+		"uglifycss":     "*"
 	},
 	
 	"devDependencies": {
