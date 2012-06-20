@@ -36,9 +36,9 @@ lib.nomnom.command("new").
 	help("Create a new project.").
 	options(
 		path:
-			abbr:    "p"
-			help:    "The path in which to initialize the project."
-			default: "."
+			position: 1
+			help:     "The path in which to initialize the project."
+			default:  "."
 		template:
 			abbr:    "t"
 			help:    "The template to use for the project. Available templates: #{getTemplateList()}"

@@ -10,6 +10,7 @@ lib =
 	wrench: require "wrench"
 	exec:   require("child_process").exec
 	squire: require "../squire"
+	colors: require "colors"
 
 
 class NewCommand extends lib.squire.Squire
@@ -34,7 +35,7 @@ class NewCommand extends lib.squire.Squire
 			lib.wrench.mkdirSyncRecursive outputPath, 0o0755
 		
 		# Copy the template over.
-		console.log "\nInitializing a new Squire project at #{outputPath} using template #{options.template}...\n"
+		console.log "\nInitializing a new Squire project at #{outputPath} using #{lib.colors.bold(options.template)} template...\n"
 		lib.exec "cp -r #{selectedTemplatePath}/* #{outputPath}"
 
 # We only expose the run function.

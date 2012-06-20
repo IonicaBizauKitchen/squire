@@ -226,6 +226,9 @@ class BuildCommand extends lib.squire.Squire
 						url = "#{path}/#{fileName}"
 						continue if (@config.ignoreHiddenFiles and fileName[0] is ".") or (result.indexOf(url) >= 0)
 						result.push url
+			else if result.indexOf(url) >= 0
+				result.splice result.indexOf(url), 1
+				result.push url
 			else
 				result.push url
 		
