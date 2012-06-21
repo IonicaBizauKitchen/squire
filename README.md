@@ -77,7 +77,7 @@ Note that for a plugin to be available you need to explicitly include it in [squ
 
 Typically you don't need to worry too much about how plugins work beyond this unless you're writing your own plugin. See [this document](https://github.com/jlong64/squire/wiki/Creating-a-Squire-plugin) for details on how to do that.
 
-Squire provides four built-in plugins: coffeescript, jade, stylus, and markdown. See [this page](https://github.com/jlong64/squire/wiki/Built-in-plugins) for details on how to use each of them.
+Squire provides four built-in plugins: coffeescript, jade, stylus, and markdown. The [wiki](https://github.com/jlong64/squire/wiki) contains information on how to use each of them.
 
 
 ## Index files ##
