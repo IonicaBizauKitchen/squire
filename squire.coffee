@@ -52,20 +52,15 @@ class exports.Squire
 		paths = [
 			"#{@projectPath}/plugins/#{pluginId}.coffee"
 			"#{@squirePath}/plugins/#{pluginId}.coffee"
-			"squire-#{pluginId}"
+			"#{@projectPath}/node_modules/squire-#{pluginId}"
 		]
 		
 		# Look for the module in several different places.
 		for path in paths
-			# Check if the plugin exists at this location.
-			# TODO: This is really hacky. The try/catch will catch both module-not-found errors and
-			# errors with the plugins themselves. Is there a better way to check if a module exists
-			# at the given path?
-			try
+			# If there's something at this path let's try to load it. Hopefully it's a plugin.
+			if lib.path.existsSync path
 				pluginModule = require path
 				break
-			catch error
-				throw error unless error.toString().indexOf("Error: Cannot find module") is 0
 		
 		if pluginModule?
 			plugin     = new pluginModule.Plugin id: pluginId, mode: @mode
