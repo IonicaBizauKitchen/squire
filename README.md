@@ -312,6 +312,17 @@ Look at the documentation for each plugin to see the config values it supports. 
 </table>
 
 
+## Changelog ##
+
+#### 1.0.1 ####
+
+* Fixed some issues with loading plugins installed from npm.
+
+#### 1.0.0 ####
+
+* Initial release.
+
+
 ## License ##
 
 Copyright (c) 2012 Jarod Long

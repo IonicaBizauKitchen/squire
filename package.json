@@ -1,14 +1,14 @@
 {
 	"name":        "squire",
-	"version":     "0.0.0",
+	"version":     "1.0.1",
 	"author":      "Chromatic Labs (http://chromaticlabs.com/)",
-	"homepage":    "http://chromaticlabs.com/squire",
+	"homepage":    "https://github.com/jlong64/squire",
 	"bugs":        "https://github.com/jlong64/squire/issues",
 	"description": "Flexible front-end build tools",
 	"keywords":    ["dependency management", "blog", "static website"],
 	
 	"contributors": [
-		"Jarod Long <jarod@chromaticlabs.com> (http://jarodlong.com/)"
+		"Jarod Long <jlong22@me.com> (http://jarodlong.com/)"
 	],
 	
 	"repository": {
