@@ -26,17 +26,12 @@ class exports.Plugin extends lib.squire.SquirePlugin
 		if data.constructor is Error
 			callback null, null, [@createError "There was an error while parsing your Markdown file's CSON header data.", data.toString(), options.url]
 		else
-			callback lib.markdown(markdown), data
-	
-	renderIndexContent: (input, options, callback) ->
-		templatePlugin = @loadPlugin @config.templatePlugin
-		
-		if templatePlugin?
-			@renderContent input, options, (html, data, errors) =>
-				# TODO: Much of this is duplicated in the CoffeeScript module. Should share the code.
-				if errors?.length > 0
-					callback null, null, errors
-				else if data?.template?
+			html = lib.markdown markdown
+			
+			if data.template?
+				templatePlugin = @loadPlugin @config.templatePlugin
+				
+				if templatePlugin?
 					localsProperty = @config.localsProperty
 					templateUrl    = "#{@appPath}/#{data.template}"
 					template       = @loadTextFile templateUrl
@@ -48,9 +43,9 @@ class exports.Plugin extends lib.squire.SquirePlugin
 					else
 						callback null, null, [@createError "Template file does not exist at #{templateUrl}."]
 				else
-					callback html, data
-		else
-			super
+					callback null, null, [@createError "Unable to load plugin #{@config.templatePlugin}.", null, options.url]
+			else
+				callback html, data
 	
 	renderAppTreeContent: (input, options, callback) ->
 		@renderContent input, options, callback
@@ -76,7 +71,6 @@ class exports.Plugin extends lib.squire.SquirePlugin
 		currentName      = ""
 		unparsedSections = []
 		sections         = []
-		sectionsByName   = {}
 		sectionPattern   = new RegExp "^#{@config.sectionString}\\s*(.*)$"
 		
 		for line, index in lines
