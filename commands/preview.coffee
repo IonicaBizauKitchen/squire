@@ -46,7 +46,6 @@ class PreviewCommand extends lib.squire.Squire
 	# Serves up the file at the given URL.
 	serveFile: (request, response, urlInfo) ->
 		if lib.path.existsSync(urlInfo.url)
-			# TODO: We need to bubble up errors from the build command.
 			response.writeHead 200, "Content-Type": lib.mime.lookup(urlInfo.url)
 			response.write lib.fs.readFileSync(urlInfo.url), "binary"
 		else
