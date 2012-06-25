@@ -40,7 +40,7 @@ class BuildCommand extends lib.squire.Squire
 				@inputFileCount++ if path.indexOf(@inputPath) is 0
 		
 		# Do the stuff to make the thing.
-		@loadPlugins => @constructAppTree => @buildFiles (errors) => options.callback?(errors)
+		@loadPlugins => @constructAppTree => @buildFiles (errors) => @cleanUp => options.callback?(errors)
 	
 	
 	# Loads all of the plugins specified by the user.
@@ -208,7 +208,6 @@ class BuildCommand extends lib.squire.Squire
 		result       = []
 		relativeUrls = lib.fs.readFileSync(inputUrlInfo.url).toString().split "\n"
 		
-		
 		# Gather up the ordered list of URLs. We store them as URLs initially because it's easier
 		# to check for duplicates that way.
 		for relativeUrl in relativeUrls
@@ -325,6 +324,18 @@ class BuildCommand extends lib.squire.Squire
 			result[index] = lib.path.join basePath, url
 		
 		result
+	
+	
+	# Cleans up after building, closing any files we've opened.
+	cleanUp: (callback) ->
+		closedFileCount = 0
+		
+		callback?()
+		# lib.file.walkSync @appPath, (path, directories, files) =>
+		# 	for fileName in files
+		# 		lib.fs.close 12912, (error) =>
+		# 			console.log error if error?
+		# 			callback?() if ++closedFileCount is @totalFileCount
 	
 	
 	# We override this function to add some additional information about the URL.

@@ -31,7 +31,8 @@
 		"file":          "*",
 		"mime":          "*",
 		"uglify-js":     "*",
-		"uglifycss":     "*"
+		"uglifycss":     "*",
+		"http-proxy":    "*"
 	},
 	
 	"devDependencies": {

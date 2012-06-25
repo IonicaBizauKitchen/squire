@@ -24,7 +24,10 @@ class exports.Squire
 			ignoreHiddenFiles: true
 			plugins:           []
 		preview:
-			minify: false
+			minify:      false
+			enableProxy: false
+			proxyHost:   "localhost"
+			proxyPort:   80
 		build:
 			minify: true
 	
@@ -35,8 +38,9 @@ class exports.Squire
 		@projectPath   = process.env.PWD
 		userConfigPath = "#{@projectPath}/config/squire.cson"
 		userConfig     = if lib.path.existsSync userConfigPath then lib.cson.parseFileSync(userConfigPath) or {} else {}
-		@config        = lib.merge @baseConfigDefaults, userConfig
-		@config        = lib.merge @config.global, @config[@mode]
+		userConfig     = lib.merge userConfig.global or {}, userConfig[@mode] or {}
+		@config        = lib.merge @baseConfigDefaults.global, @baseConfigDefaults[@mode]
+		@config        = lib.merge @config, userConfig
 		
 		# Store some useful paths.
 		@squirePath = __dirname

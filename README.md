@@ -7,6 +7,7 @@ Squire is a set of flexible front-end build tools for static content. It's equal
 * A live preview server for easy, rapid development
 * A generic plugin system to support all types of content
 * A flexible configuration system
+* Request proxying
 
 
 ## Getting started ##
@@ -255,6 +256,13 @@ The tree is made up of SquireDirectories and SquireFiles, which are documented b
 </table>
 
 
+## Request proxying ##
+
+In preview mode, Squire can proxy requests to another server. This is useful when you're building a web application that needs to talk to some other backend server. You can enable the feature by setting some [config values](#configuration-files). The config properties you'll be interested in are enableProxy, proxyPort and possibly proxyHost.
+
+When proxying is enabled, Squire will no longer serve 404s on its own. Any requests that don't correspond to a built file will automatically be sent to the proxy server instead.
+
+
 ## Configuration files ##
 
 Squire supports configuration at the global level and the plugin level. All configuration files are written in [CSON](https://github.com/bevry/cson) and live in the config directory. The file "squire.cson" contains configuration for the entire build process, and any other files are specifically for plugins with the same name. "jade.cson" will correspond to the jade plugin, etc.
@@ -309,10 +317,30 @@ Look at the documentation for each plugin to see the config values it supports. 
 		<td>false during preview, true during build</td>
 		<td>This isn't used by Squire itself, but some plugins use it to specify whether their output is minified or not.</td>
 	</tr>
+	<tr>
+		<td>enableProxy</td>
+		<td>false during preview, undefined during build</td>
+		<td>Set this to true to enable request proxying in preview mode. You'll likely need to set the proxyPort property as well.</td>
+	</tr>
+	<tr>
+		<td>proxyHost</td>
+		<td>"localhost" during preview, undefined during build</td>
+		<td>If you are proxying requests, you can set this to change the proxy host name.</td>
+	</tr>
+	<tr>
+		<td>proxyPort</td>
+		<td>80 during preview, undefined during build</td>
+		<td>If you are proxying requests, you can set this to change the proxy port number.</td>
+	</tr>
 </table>
 
 
 ## Changelog ##
+
+#### 1.0.2 ####
+
+* Added support for request proxying.
+* Fixed an issue where the build directory would sometimes be removed during the build process, causing the server to die.
 
 #### 1.0.1 ####
 
