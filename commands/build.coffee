@@ -107,33 +107,32 @@ class BuildCommand extends lib.squire.Squire
 	buildFiles: (callback) ->
 		allErrors = []
 		
-		# Clean the build folder. Since we're going to be running rm -rf, we do a little bit of
+		# Clean the build folder. Since we're going to be deleting a folder, we do a little bit of
 		# sanity checking to help prevent catastrophic occurrences.
 		if @outputPath.indexOf(@projectPath) is 0
-			lib.exec "rm -rf #{@outputPath}", (error, stdout, stderr) =>
-				throw error if error?
-				lib.fs.mkdirSync @outputPath, 0o0755
-				
-				# Fill up the output paths with the directory structure of the input path.
-				lib.file.walkSync @inputPath, (path, directories, files) =>
-					relativePath = path[@inputPath.length + 1..]
-					outputPath   = "#{@outputPath}/#{relativePath}"
-					lib.fs.mkdirSync "#{outputPath}/#{directoryName}" for directoryName in directories
-				
-				# Build each file. We keep track of how many files we've built so that when we're done
-				# we can perform the final callback.
-				builtFileCount = 0
-				
-				lib.file.walkSync @inputPath, (path, directories, files) =>
-					for fileName in files
-						continue if @config.ignoreHiddenFiles and fileName[0] is "."
+			lib.wrench.rmdirSyncRecursive @outputPath, true
+			lib.fs.mkdirSync @outputPath, 0o0755
+			
+			# Fill up the output paths with the directory structure of the input path.
+			lib.file.walkSync @inputPath, (path, directories, files) =>
+				relativePath = path[@inputPath.length + 1..]
+				outputPath   = "#{@outputPath}/#{relativePath}"
+				lib.fs.mkdirSync "#{outputPath}/#{directoryName}" for directoryName in directories
+			
+			# Build each file. We keep track of how many files we've built so that when we're done
+			# we can perform the final callback.
+			builtFileCount = 0
+			
+			lib.file.walkSync @inputPath, (path, directories, files) =>
+				for fileName in files
+					continue if @config.ignoreHiddenFiles and fileName[0] is "."
+					
+					@buildFile "#{path}/#{fileName}", (errors = []) =>
+						allErrors = allErrors.concat errors
 						
-						@buildFile "#{path}/#{fileName}", (errors = []) =>
-							allErrors = allErrors.concat errors
-							
-							if ++builtFileCount is @inputFileCount
-								console.log error.fancyMessage for error in allErrors
-								callback?(allErrors)
+						if ++builtFileCount is @inputFileCount
+							console.log error.fancyMessage for error in allErrors
+							callback?(allErrors)
 	
 	
 	# Builds the file at the given URL. The callback must be called whenever the file is done building.
@@ -183,10 +182,10 @@ class BuildCommand extends lib.squire.Squire
 		chunkOutputs = []
 		allErrors    = []
 		
-		recursiveBuildChunk = (index) ->
+		recursiveBuildChunk = (index) =>
 			chunk = chunks[index]
 			
-			chunk.plugin.renderContentList chunk.inputs, { urls: chunk.urls }, (output, data, errors = []) ->
+			chunk.plugin.renderContentList chunk.inputs, { urls: chunk.urls }, (output, data, errors = []) =>
 				chunkOutputs.push output if output?
 				allErrors = allErrors.concat errors
 				
@@ -208,6 +207,7 @@ class BuildCommand extends lib.squire.Squire
 	getUrlsForConcatFile: (inputUrlInfo) ->
 		result       = []
 		relativeUrls = lib.fs.readFileSync(inputUrlInfo.url).toString().split "\n"
+		
 		
 		# Gather up the ordered list of URLs. We store them as URLs initially because it's easier
 		# to check for duplicates that way.
