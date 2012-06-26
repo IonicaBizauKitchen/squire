@@ -20,6 +20,7 @@ class exports.Plugin extends lib.squire.SquirePlugin
 		global:
 			templatePlugin: "jade"
 			localsProperty: "locals"
+			wrapFiles:      true
 	
 	renderContent: (input, options, callback) ->
 		js     = null
@@ -48,6 +49,7 @@ class exports.Plugin extends lib.squire.SquirePlugin
 		# when we actually compile our source, we are compiling a combined file, which causes us to
 		# lose filename and line number information when we have syntax errors.
 		allErrors      = []
+		outputs        = []
 		builtFileCount = 0
 		
 		for input, index in inputs
@@ -55,10 +57,13 @@ class exports.Plugin extends lib.squire.SquirePlugin
 			
 			@renderContent input, (if url? then { url: url } else {}), (output, data, errors = []) =>
 				allErrors = allErrors.concat errors
+				outputs.push output
 				
 				if ++builtFileCount is inputs.length
 					if allErrors.length > 0
 						callback null, null, allErrors
+					else if @config.wrapFiles
+						callback outputs.join("\n\n")
 					else
 						@renderContent inputs.join("\n\n"), options, callback
 	
