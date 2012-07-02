@@ -332,6 +332,11 @@ Look at the documentation for each plugin to see the config values it supports. 
 		<td>80 during preview, undefined during build</td>
 		<td>If you are proxying requests, you can set this to change the proxy port number.</td>
 	</tr>
+	<tr>
+		<td>routeRewrites</td>
+		<td>undefined</td>
+		<td>An array of objects, each with two string properties, from and to. When the preview server is running, any routes that match the from route will instead call the to route.</td>
+	</tr>
 </table>
 
 

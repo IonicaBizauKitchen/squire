@@ -42,6 +42,7 @@ class PreviewCommand extends lib.squire.Squire
 		else
 			@serveFile request, response, proxy, urlInfo
 	
+	
 	# Serves up the file at the given URL.
 	serveFile: (request, response, proxy, urlInfo) ->
 		if lib.fs.existsSync urlInfo.url
@@ -55,11 +56,13 @@ class PreviewCommand extends lib.squire.Squire
 			response.write "404: File #{urlInfo.url} not found."
 			response.end()
 	
+	
 	# Takes in a list of errors generated during the build process and serves them with a 500.
 	serveErrors: (request, response, proxy, errors) ->
 		response.writeHead 500, "Content-Type": "text/plain"
 		response.write @consolidateErrors errors, "plain"
 		response.end()
+	
 	
 	# Does some processing of a given request URL and returns a URL info object.
 	getRouteUrlInfo: (url) ->
@@ -93,6 +96,7 @@ class PreviewCommand extends lib.squire.Squire
 		
 		url = lib.path.join @outputPath, url
 		@getUrlInfo url, @outputPath
+
 
 # We only expose the run function.
 exports.run = (options) -> (new PreviewCommand mode: "preview").run options
