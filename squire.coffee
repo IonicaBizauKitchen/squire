@@ -37,7 +37,7 @@ class exports.Squire
 		# Gather up config values.
 		@projectPath   = process.env.PWD
 		userConfigPath = "#{@projectPath}/config/squire.cson"
-		userConfig     = if lib.path.existsSync userConfigPath then lib.cson.parseFileSync(userConfigPath) or {} else {}
+		userConfig     = if lib.fs.existsSync userConfigPath then lib.cson.parseFileSync(userConfigPath) or {} else {}
 		userConfig     = lib.merge userConfig.global or {}, userConfig[@mode] or {}
 		@config        = lib.merge @baseConfigDefaults.global, @baseConfigDefaults[@mode]
 		@config        = lib.merge @config, userConfig
@@ -62,7 +62,7 @@ class exports.Squire
 		# Look for the module in several different places.
 		for path in paths
 			# If there's something at this path let's try to load it. Hopefully it's a plugin.
-			if lib.path.existsSync path
+			if lib.fs.existsSync path
 				pluginModule = require path
 				break
 		
@@ -78,7 +78,7 @@ class exports.Squire
 	loadFile: (url, basePath = @appPath) ->
 		url = lib.path.join basePath, url if url[0] isnt "/"
 		
-		if lib.path.existsSync url
+		if lib.fs.existsSync url
 			lib.fs.readFileSync url
 		else
 			null
@@ -123,7 +123,7 @@ class exports.Squire
 	getUrlInfo: (url, basePath = @appPath) ->
 		url                    = "#{basePath}/#{url}" unless url[0] is "/"
 		url                    = url[0..url.length - 2] if url[url.length - 1] is "/"
-		exists                 = lib.path.existsSync url
+		exists                 = lib.fs.existsSync url
 		isDirectory            = if exists then lib.fs.lstatSync(url).isDirectory() else url.lastIndexOf("/") > url.lastIndexOf(".")
 		path                   = if isDirectory then url else lib.path.dirname url
 		pathComponents         = path.split("/")[1..]
@@ -165,7 +165,7 @@ class exports.SquirePlugin extends exports.Squire
 		
 		# We add to the base config with our plugin-specific config.
 		userConfigPath = "#{@projectPath}/config/#{@id}.cson"
-		userConfig     = if lib.path.existsSync userConfigPath then lib.cson.parseFileSync(userConfigPath) or {} else {}
+		userConfig     = if lib.fs.existsSync userConfigPath then lib.cson.parseFileSync(userConfigPath) or {} else {}
 		pluginConfig   = lib.merge { global: {}, preview: {}, build: {} }, @configDefaults
 		pluginConfig   = lib.merge pluginConfig, userConfig
 		pluginConfig   = lib.merge pluginConfig.global, pluginConfig[@mode]

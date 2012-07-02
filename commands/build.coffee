@@ -21,11 +21,11 @@ class BuildCommand extends lib.squire.Squire
 		@totalFileCount = @inputFileCount = 0
 		
 		# Make sure we've got our directories set up properly.
-		unless lib.path.existsSync @appPath
+		unless lib.fs.existsSync @appPath
 			@logError "Configured application path #{@appPath} does not exist."
 			return
 		
-		unless lib.path.existsSync @inputPath
+		unless lib.fs.existsSync @inputPath
 			@logError "Configured input path #{@inputPath} does not exist."
 			return
 		
@@ -215,7 +215,7 @@ class BuildCommand extends lib.squire.Squire
 			continue if relativeUrl.length is 0 or relativeUrl[0] is "#"
 			url = lib.path.join @appPath, relativeUrl
 			
-			unless lib.path.existsSync url
+			unless lib.fs.existsSync url
 				@logError "Concat file #{inputUrlInfo.relativeUrl} includes file #{relativeUrl}, which does not exist."
 				continue
 			
@@ -238,7 +238,7 @@ class BuildCommand extends lib.squire.Squire
 			dependentUrls = @getDependentUrlsForUrl url
 			
 			for dependentUrl in dependentUrls
-				unless lib.path.existsSync dependentUrl
+				unless lib.fs.existsSync dependentUrl
 					relativeUrl          = @getUrlInfo(url).relativeUrl
 					dependentRelativeUrl = @getUrlInfo(dependentUrl).relativeUrl
 					@logError "File #{relativeUrl} requires file #{dependentRelativeUrl}, which does not exist."

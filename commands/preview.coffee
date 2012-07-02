@@ -44,7 +44,7 @@ class PreviewCommand extends lib.squire.Squire
 	
 	# Serves up the file at the given URL.
 	serveFile: (request, response, proxy, urlInfo) ->
-		if lib.path.existsSync urlInfo.url
+		if lib.fs.existsSync urlInfo.url
 			response.writeHead 200, "Content-Type": lib.mime.lookup(urlInfo.url)
 			response.write lib.fs.readFileSync(urlInfo.url), "binary"
 			response.end()

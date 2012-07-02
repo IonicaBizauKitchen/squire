@@ -21,13 +21,13 @@ class NewCommand extends lib.squire.Squire
 		outputPath           = lib.path.join @projectPath, options.path
 		
 		# Make sure that we received a valid template.
-		unless lib.path.existsSync selectedTemplatePath
+		unless lib.fs.existsSync selectedTemplatePath
 			templates = (path for path in lib.fs.readdirSync(templatePath) when path[0] isnt ".").join ", "
 			@logError "Template #{options.template} does not exist. Available templates are #{templates}."
 			return
 		
 		# Make sure that the output path exists and is not empty.
-		if lib.path.existsSync outputPath
+		if lib.fs.existsSync outputPath
 			if lib.fs.readdirSync(outputPath).length > 0
 				@logError "Path #{outputPath} is not empty. Empty the contents of the directory or choose a new path."
 				return
