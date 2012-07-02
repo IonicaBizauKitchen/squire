@@ -212,24 +212,40 @@ class BuildCommand extends lib.squire.Squire
 		# to check for duplicates that way.
 		for relativeUrl in relativeUrls
 			relativeUrl = relativeUrl.trim()
+			relativeUrl = relativeUrl[...-1] if relativeUrl[-1..] is "/"
 			continue if relativeUrl.length is 0 or relativeUrl[0] is "#"
-			url = lib.path.join @appPath, relativeUrl
 			
-			unless lib.fs.existsSync url
-				@logError "Concat file #{inputUrlInfo.relativeUrl} includes file #{relativeUrl}, which does not exist."
-				continue
-			
-			if lib.fs.lstatSync(url).isDirectory()
-				lib.file.walkSync url, (path, directories, files) =>
-					for fileName in files
-						url = "#{path}/#{fileName}"
-						continue if (@config.ignoreHiddenFiles and fileName[0] is ".") or (result.indexOf(url) >= 0)
-						result.push url
-			else if result.indexOf(url) >= 0
-				result.splice result.indexOf(url), 1
-				result.push url
+			# Lines preceded with an exclamation point will remove files, otherwise we add them.
+			if relativeUrl[0] is "!"
+				url = lib.path.join @appPath, relativeUrl[1..]
+				
+				if lib.fs.lstatSync(url).isDirectory()
+					lib.file.walkSync url, (path, directories, files) =>
+						for fileName in files
+							url   = "#{path}/#{fileName}"
+							index = result.indexOf url
+							result.splice index, 1 if index >= 0
+				else
+					index = result.indexOf url
+					result.splice index, 1 if index >= 0
 			else
-				result.push url
+				url = lib.path.join @appPath, relativeUrl
+				
+				unless lib.fs.existsSync url
+					@logError "Concat file #{inputUrlInfo.relativeUrl} includes file #{relativeUrl}, which does not exist."
+					continue
+				
+				if lib.fs.lstatSync(url).isDirectory()
+					lib.file.walkSync url, (path, directories, files) =>
+						for fileName in files
+							url = "#{path}/#{fileName}"
+							continue if (@config.ignoreHiddenFiles and fileName[0] is ".") or (result.indexOf(url) >= 0)
+							result.push url
+				else if result.indexOf(url) >= 0
+					result.splice result.indexOf(url), 1
+					result.push url
+				else
+					result.push url
 		
 		# Handle require statements in our files.
 		orderedResult = result.slice()
