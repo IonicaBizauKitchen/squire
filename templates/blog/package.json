@@ -1,0 +1,12 @@
+{
+	"name":    "my-squire-app",
+	"version": "0.0.0",
+	
+	"dependencies": {
+		"squire": "*"
+	},
+	
+	"engines": {
+		"node": "*"
+	}
+}
