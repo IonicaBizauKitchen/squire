@@ -22,11 +22,12 @@ class exports.Plugin extends lib.squire.SquirePlugin
 			wrapFiles:      true
 	
 	renderContent: (input, options, callback) ->
-		js     = null
-		errors = null
+		js              = null
+		errors          = null
+		compilerOptions = lib.merge options.compilerOptions or {}, { bare: !@config.wrapFiles }
 		
 		try
-			js = lib.coffee.compile input, options.compilerOptions or {}
+			js = lib.coffee.compile input, compilerOptions
 		catch compileError
 			errors = [@createCoffeeScriptError compileError, options.url]
 		
