@@ -20,8 +20,7 @@ class PreviewCommand extends lib.squire.Squire
 	# The entry point to the command.
 	run: (options) ->
 		server = lib.httpProxy.createServer (request, response, proxy) =>
-			url = lib.path.join @outputPath, request.url
-			@handleRequest request, response, proxy, @getUrlInfo(url, @outputPath)
+			@handleRequest request, response, proxy, @getRouteUrlInfo(request.url)
 		
 		server.listen options.port
 		
@@ -61,6 +60,39 @@ class PreviewCommand extends lib.squire.Squire
 		response.writeHead 500, "Content-Type": "text/plain"
 		response.write @consolidateErrors errors, "plain"
 		response.end()
+	
+	# Does some processing of a given request URL and returns a URL info object.
+	getRouteUrlInfo: (url) ->
+		rewrites      = @config.routeRewrites or []
+		urlComponents = url.split "/"
+		
+		for rewrite in rewrites
+			{from, to}     = rewrite
+			from           = from[0...from.length - 1] if from[from.length - 1] is "/"
+			fromComponents = from.split "/"
+			matches        = true
+			keys           = {}
+			
+			if fromComponents.length is urlComponents.length
+				for fromComponent, index in fromComponents
+					urlComponent = urlComponents[index]
+					
+					if fromComponent[0] is ":"
+						key       = fromComponent[1..]
+						keys[key] = urlComponent
+					else if fromComponent isnt urlComponent
+						matches = false
+						break
+			else
+				matches = false
+			
+			if matches
+				url = to
+				url = url.replace ":#{key}", value for key, value of keys
+				break
+		
+		url = lib.path.join @outputPath, url
+		@getUrlInfo url, @outputPath
 
 # We only expose the run function.
 exports.run = (options) -> (new PreviewCommand mode: "preview").run options
