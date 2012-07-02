@@ -132,6 +132,17 @@ scripts/init.coffee
 
 This will guarantee that all of the files inside the scripts directory will be included as before, but now everything in lib is guaranteed to be included first, followed immediately by setup, with init coming last. The order of the files inside lib is not guaranteed, but in this case that's okay.
 
+Let's say we have some test files inside the folder scripts/tests that we don't want to be included into the concat file. We can exclude them with an exclamation point prefix.
+
+```
+# This file includes all of our JavaScript.
+scripts/lib
+scripts/setup.coffee
+scripts
+scripts/init.coffee
+!scripts/tests
+```
+
 Although script_a, script_b and script_c are guaranteed to be included after setup and before init, they are not guaranteed any order amongst themselves. But let's say script_b actually depends on script_a. We could type out the two files explicitly in the concat file, but as the project gets larger that's going to become unwieldy. Instead we can specify dependencies inside the files themselves, similar to how files are included or required in other programming languages. This is done with a specially-formatted comment near the top of the file.
 
 __scripts/script_a.coffee__
