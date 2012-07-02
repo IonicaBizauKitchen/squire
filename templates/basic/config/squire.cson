@@ -1,2 +1,2 @@
 global:
-	plugins: ["coffeescript", "jade", "stylus", "markdown"]
+	plugins: ["coffeescript", "javascript", "jade", "stylus", "css", "markdown"]

@@ -204,6 +204,10 @@ class exports.SquirePlugin extends exports.Squire
 	renderAppTreeContent: (input, options, callback) ->
 		# By default, the raw input of each file goes into the app tree.
 		callback input
+	
+	postProcessContent: (input, options, callback) ->
+		# By default, post processing does nothing.
+		callback input
 
 
 # A class that represents a directory. The app tree is comprised of these and SquireFiles.

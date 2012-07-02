@@ -40,14 +40,14 @@ class BuildCommand extends lib.squire.Squire
 				@inputFileCount++ if path.indexOf(@inputPath) is 0
 		
 		# Do the stuff to make the thing.
-		@loadPlugins => @constructAppTree => @buildFiles (errors) => @cleanUp => options.callback?(errors)
+		@loadPlugins => @constructAppTree => @buildFiles (errors) => options.callback?(errors)
 	
 	
 	# Loads all of the plugins specified by the user.
 	loadPlugins: (callback) ->
 		@defaultPlugin          = new lib.squire.SquirePlugin id: "default"
 		@defaultPlugin.fileType = "binary"
-		@plugins                = {}
+		@plugins                = []
 		
 		return unless @config.plugins?
 		
@@ -62,6 +62,7 @@ class BuildCommand extends lib.squire.Squire
 				@logError "Plugin #{pluginId} does not define any associated input extensions."
 				continue
 			
+			@plugins.push plugin
 			@plugins[extension] = plugin for extension in plugin.inputExtensions
 		
 		callback?()
@@ -146,9 +147,10 @@ class BuildCommand extends lib.squire.Squire
 			input          = if inputUrlInfo.plugin.fileType is "text" then @loadTextFile url else @loadFile url
 			renderFunction = if inputUrlInfo.isIndexFile then "renderIndexContent" else "renderContent"
 			
-			inputUrlInfo.plugin[renderFunction] input, { url: url }, (output = "", data = {}, errors = []) =>
-				lib.fs.writeFileSync outputUrlInfo.url, output
-				callback errors
+			inputUrlInfo.plugin[renderFunction] input, { url: url }, (output = "", data, errors = []) =>
+				@postProcessContent outputUrlInfo, output, (output = "", postErrors = []) =>
+					lib.fs.writeFileSync outputUrlInfo.url, output
+					callback errors.concat(postErrors)
 	
 	
 	# A helper to build a concat file.
@@ -192,14 +194,35 @@ class BuildCommand extends lib.squire.Squire
 				if ++index < chunks.length
 					recursiveBuildChunk index
 				else
-					lib.fs.writeFileSync outputUrlInfo.url, chunkOutputs.join("\n\n")
-					
-					if allErrors.length > 0
+					@postProcessContent outputUrlInfo, chunkOutputs.join("\n\n"), (output = "", errors = []) ->
+						lib.fs.writeFileSync outputUrlInfo.url, output
+						allErrors = allErrors.concat errors
 						callback allErrors
-					else
-						callback()
 		
 		recursiveBuildChunk 0
+	
+	
+	postProcessContent: (urlInfo, content, callback) ->
+		postProcessPlugins = []
+		
+		# Don't do any processing of the content if it's null or undefined.
+		(callback content; return) unless content?
+		
+		# Find all plugins who can post-process this content.
+		for plugin in @plugins
+			matchedExtensions = plugin.postProcessExtensions or [plugin.outputExtension]
+			postProcessPlugins.push plugin if urlInfo.extension in matchedExtensions
+		
+		# Post-process with each plugin recursively.
+		recursivePostProcess = (output, allErrors = []) =>
+			if postProcessPlugins.length > 0
+				postProcessPlugins[0].postProcessContent content, {}, (output = "", data, errors = []) =>
+					postProcessPlugins.shift()
+					recursivePostProcess output, allErrors.concat(errors)
+			else
+				callback output, allErrors
+		
+		recursivePostProcess content
 	
 	
 	# A helper that returns a list of URLs associated with the given concat file. They will be in
@@ -340,18 +363,6 @@ class BuildCommand extends lib.squire.Squire
 			result[index] = lib.path.join basePath, url
 		
 		result
-	
-	
-	# Cleans up after building, closing any files we've opened.
-	cleanUp: (callback) ->
-		closedFileCount = 0
-		
-		callback?()
-		# lib.file.walkSync @appPath, (path, directories, files) =>
-		# 	for fileName in files
-		# 		lib.fs.close 12912, (error) =>
-		# 			console.log error if error?
-		# 			callback?() if ++closedFileCount is @totalFileCount
 	
 	
 	# We override this function to add some additional information about the URL.
