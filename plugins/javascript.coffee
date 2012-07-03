@@ -12,6 +12,10 @@ class exports.Plugin extends lib.squire.SquirePlugin
 	inputExtensions: ["js"]
 	outputExtension: "js"
 	
+	configDefaults:
+		global:
+			useStrict: false
+	
 	postProcessContent: (js, options, callback) ->
 		errors = null
 		
@@ -23,5 +27,8 @@ class exports.Plugin extends lib.squire.SquirePlugin
 				js         = lib.uglify.uglify.gen_code syntaxTree
 			catch parseError
 				errors = [@createCoffeeScriptError "There was an error while minifying your JavaScript:", error.toString(), options.url]
+		
+		if @config.useStrict
+			js = "\"use strict\";\n\n#{js}"
 		
 		callback js, null, errors
