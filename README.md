@@ -353,6 +353,10 @@ Look at the documentation for each plugin to see the config values it supports. 
 
 ## Changelog ##
 
+#### 1.1.1 ####
+
+* The JavaScript plugin now allows you to use strict mode automatically with the useStrict config option.
+
 #### 1.1.0 ####
 
 * Plugins can now perform post-processing on content after it's been compiled.
