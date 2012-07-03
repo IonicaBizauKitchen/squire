@@ -78,7 +78,7 @@ Note that for a plugin to be available you need to explicitly include it in [squ
 
 Typically you don't need to worry too much about how plugins work beyond this unless you're writing your own plugin. See [this document](https://github.com/jlong64/squire/wiki/Creating-a-Squire-plugin) for details on how to do that.
 
-Squire provides four built-in plugins: coffeescript, jade, stylus, and markdown. The [wiki](https://github.com/jlong64/squire/wiki) contains information on how to use each of them.
+Squire provides six built-in plugins: coffeescript, jade, stylus, markdown, and minifiers for javascript and css. The [wiki](https://github.com/jlong64/squire/wiki) contains information on how to use each of them.
 
 
 ## Index files ##
@@ -352,6 +352,16 @@ Look at the documentation for each plugin to see the config values it supports. 
 
 
 ## Changelog ##
+
+#### 1.1.0 ####
+
+* Plugins can now perform post-processing on content after it's been compiled.
+* JavaScript and CSS minification have been separated out into their own plugins that utilize post-processing. This improves the behavior of minification for concat files and allows for minification even if you aren't using CoffeeScript or Stylus.
+* Files can now be excluded from concat files by preceding a line with an exclamation point.
+* Added support for route rewriting in preview mode.
+* Improved template projects.
+* CoffeeScript files can now be optionally wrapped in a function. This is turned on by default.
+* Removed usage of node.js API deprecated as of 0.7.1.
 
 #### 1.0.2 ####
 

@@ -1,6 +1,6 @@
 {
 	"name":        "squire",
-	"version":     "1.0.2",
+	"version":     "1.1.0",
 	"author":      "Chromatic Labs (http://chromaticlabs.com/)",
 	"homepage":    "https://github.com/jlong64/squire",
 	"bugs":        "https://github.com/jlong64/squire/issues",
@@ -44,7 +44,7 @@
 	},
 	
 	"engines": {
-		"node": ">=0.8.0"
+		"node": ">=0.7.1"
 	},
 	
 	"main": "./squire.coffee",
