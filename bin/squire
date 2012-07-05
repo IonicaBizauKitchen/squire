@@ -31,7 +31,8 @@ getTemplateList = ->
 
 # A helper function that will return the current version.
 getVersion = ->
-	file = lib.fs.readFileSync("package.json").toString()
+	packagePath = lib.path.join __dirname, "../package.json"
+	file        = lib.fs.readFileSync(packagePath).toString()
 	"v" + JSON.parse(file).version
 
 

@@ -353,6 +353,10 @@ Look at the documentation for each plugin to see the config values it supports. 
 
 ## Changelog ##
 
+#### 1.1.3 ####
+
+* Fixed an issue with the version command.
+
 #### 1.1.2 ####
 
 * The current version can now be inspected by running `squire version`.
