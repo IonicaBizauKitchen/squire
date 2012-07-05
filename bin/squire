@@ -60,10 +60,9 @@ lib.nomnom.command("build").
 	help("Build your project.").
 	options(
 		mode:
-			hidden:  true
+			abbr:    "m"
 			help:    "Specifies the build mode, which affects which config values are used."
 			default: "build"
-			choices: ["build", "preview"]
 	).
 	callback (options) -> commands.build.run options
 

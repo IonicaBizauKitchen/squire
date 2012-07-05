@@ -39,7 +39,7 @@ class exports.Squire
 		userConfigPath = "#{@projectPath}/config/squire.cson"
 		userConfig     = if lib.fs.existsSync userConfigPath then lib.cson.parseFileSync(userConfigPath) or {} else {}
 		userConfig     = lib.merge userConfig.global or {}, userConfig[@mode] or {}
-		@config        = lib.merge @baseConfigDefaults.global, @baseConfigDefaults[@mode]
+		@config        = lib.merge @baseConfigDefaults.global, @baseConfigDefaults[@mode] or {}
 		@config        = lib.merge @config, userConfig
 		
 		# Store some useful paths.
@@ -168,7 +168,7 @@ class exports.SquirePlugin extends exports.Squire
 		userConfig     = if lib.fs.existsSync userConfigPath then lib.cson.parseFileSync(userConfigPath) or {} else {}
 		pluginConfig   = lib.merge { global: {}, preview: {}, build: {} }, @configDefaults
 		pluginConfig   = lib.merge pluginConfig, userConfig
-		pluginConfig   = lib.merge pluginConfig.global, pluginConfig[@mode]
+		pluginConfig   = lib.merge pluginConfig.global, pluginConfig[@mode] or {}
 		@config        = lib.merge @config, pluginConfig
 	
 	renderContent: (input, options, callback) ->
