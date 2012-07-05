@@ -325,7 +325,7 @@ Look at the documentation for each plugin to see the config values it supports. 
 	</tr>
 	<tr>
 		<td>minify</td>
-		<td>false during preview, true during build</td>
+		<td>true during build, false otherwise</td>
 		<td>This isn't used by Squire itself, but some plugins use it to specify whether their output is minified or not.</td>
 	</tr>
 	<tr>
@@ -352,6 +352,11 @@ Look at the documentation for each plugin to see the config values it supports. 
 
 
 ## Changelog ##
+
+#### 1.1.2 ####
+
+* The current version can now be inspected by running `squire version`.
+* Custom modes can now be specified when building with the `-m` or `--mode` flag, as in `squire build -m test`.
 
 #### 1.1.1 ####
 

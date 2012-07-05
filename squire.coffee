@@ -23,8 +23,8 @@ class exports.Squire
 			outputDirectory:   "build"
 			ignoreHiddenFiles: true
 			plugins:           []
+			minify:            false
 		preview:
-			minify:      false
 			enableProxy: false
 			proxyHost:   "localhost"
 			proxyPort:   80
