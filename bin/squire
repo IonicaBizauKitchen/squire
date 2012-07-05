@@ -29,6 +29,12 @@ getTemplateList = ->
 	templates.join ", "
 
 
+# A helper function that will return the current version.
+getVersion = ->
+	file = lib.fs.readFileSync("package.json").toString()
+	"v" + JSON.parse(file).version
+
+
 # Configure nomnom and set up our commands.
 lib.nomnom.script("squire").colors()
 
@@ -65,6 +71,10 @@ lib.nomnom.command("build").
 			default: "build"
 	).
 	callback (options) -> commands.build.run options
+
+lib.nomnom.command("version").
+	help("Print the current version.").
+	callback (options) -> console.log getVersion()
 
 # Parse the arguments.
 args = lib.nomnom.parse()
