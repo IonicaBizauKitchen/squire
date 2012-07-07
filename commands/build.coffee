@@ -355,6 +355,9 @@ class BuildCommand extends lib.squire.Squire
 			else
 				break
 		
+		# Close the file from the line reader.
+		lib.fs.closeSync reader.fd
+		
 		# Convert relative URLs to absolute URLs.
 		urlInfo = @getUrlInfo url
 		
