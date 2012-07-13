@@ -353,6 +353,10 @@ Look at the documentation for each plugin to see the config values it supports. 
 
 ## Changelog ##
 
+#### 1.1.5 ####
+
+* package.json now specifies major and minor versions of dependencies.
+
 #### 1.1.4 ####
 
 * Fixed a crash that would occur after running the preview server for too long due to too many open files.
