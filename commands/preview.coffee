@@ -19,6 +19,8 @@ commands =
 class PreviewCommand extends lib.squire.Squire
 	# The entry point to the command.
 	run: (options) ->
+		@verboseLevel = options.verbose
+		
 		server = lib.httpProxy.createServer (request, response, proxy) =>
 			@handleRequest request, response, proxy, @getRouteUrlInfo(request.url)
 		
@@ -34,6 +36,8 @@ class PreviewCommand extends lib.squire.Squire
 		urlInfo = @getUrlInfo "#{urlInfo.url}/index.html" if urlInfo.isDirectory
 		
 		if urlInfo.baseName is "index"
+			@log "[Build]", 1
+			
 			commands.build.run mode: "preview", callback: (errors) =>
 				if errors.length > 0
 					@serveErrors request, response, proxy, errors
@@ -46,12 +50,15 @@ class PreviewCommand extends lib.squire.Squire
 	# Serves up the file at the given URL.
 	serveFile: (request, response, proxy, urlInfo) ->
 		if lib.fs.existsSync urlInfo.url
+			@log "[Serve] #{urlInfo.relativeUrl}", 2
 			response.writeHead 200, "Content-Type": lib.mime.lookup(urlInfo.url)
 			response.write lib.fs.readFileSync(urlInfo.url), "binary"
 			response.end()
 		else if @config.enableProxy
+			@log "[Proxy] #{urlInfo.relativeUrl}", 2
 			proxy.proxyRequest request, response, host: @config.proxyHost, port: @config.proxyPort
 		else
+			@log "[Serve] #{urlInfo.relativeUrl} (Not Found)", 2
 			response.writeHead 404, "Content-Type": "text/plain"
 			response.write "404: File #{urlInfo.url} not found."
 			response.end()
@@ -96,6 +103,24 @@ class PreviewCommand extends lib.squire.Squire
 		
 		url = lib.path.join @outputPath, url
 		@getUrlInfo url, @outputPath
+	
+	
+	# A log helper that filters messages based on a verbose level.
+	log: (message, verboseThreshold = 1) ->
+		console.log "<#{@getTimestamp()}> #{message}" if @verboseLevel >= verboseThreshold
+	
+	
+	# Returns a formatted timestamp for the current time.
+	getTimestamp: ->
+		date    = new Date
+		hours   = date.getHours()
+		minutes = date.getMinutes()
+		seconds = date.getSeconds()
+		hours   = "0#{hours}"   if hours < 10
+		minutes = "0#{minutes}" if minutes < 10
+		seconds = "0#{seconds}" if seconds < 10
+		
+		"#{hours}:#{minutes}:#{seconds}"
 
 
 # We only expose the run function.

@@ -60,9 +60,10 @@ lib.nomnom.command("preview").
 			abbr:    "p"
 			help:    "The port number to use for the preview server."
 			default: 6400
-	).
-	options(
-		
+		verbose:
+			abbr:    "v"
+			help:    "A verboseness level between 0 and 2. 0 = no text, 1 = some text, 2 = lots of text."
+			default: 0
 	).
 	callback (options) -> commands.preview.run options
 
