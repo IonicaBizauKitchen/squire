@@ -31,4 +31,9 @@ class exports.Plugin extends lib.squire.SquirePlugin
 		if @config.useStrict
 			js = "\"use strict\";\n\n#{js}"
 		
+		if @config.constants?
+			constantsString  = ""
+			constantsString += "window[\"#{key}\"] = #{JSON.stringify(value)};\n" for key, value of @config.constants
+			js               = "#{constantsString}\n#{js}"
+		
 		callback js, null, errors
