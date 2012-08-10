@@ -124,7 +124,7 @@ class exports.Squire
 		url                    = "#{basePath}/#{url}" unless url[0] is "/"
 		url                    = url[0..url.length - 2] if url[url.length - 1] is "/"
 		exists                 = lib.fs.existsSync url
-		isDirectory            = if exists then lib.fs.lstatSync(url).isDirectory() else false # url.lastIndexOf("/") > url.lastIndexOf(".")
+		isDirectory            = if exists then lib.fs.lstatSync(url).isDirectory() else false
 		path                   = if isDirectory then url else lib.path.dirname url
 		pathComponents         = path.split("/")[1..]
 		relativePath           = path[basePath.length + 1..]
