@@ -353,6 +353,12 @@ Look at the documentation for each plugin to see the config values it supports. 
 
 ## Changelog ##
 
+#### 1.1.6 ####
+
+* Fixed an issue where the preview server would rebuild projects too often.
+* The JavaScript plugin now allows you to specify constants to be injected into the output.
+* Can now specify the verboseness of the preview command.
+
 #### 1.1.5 ####
 
 * package.json now specifies major and minor versions of dependencies.
