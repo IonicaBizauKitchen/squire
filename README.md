@@ -344,6 +344,16 @@ Look at the documentation for each plugin to see the config values it supports. 
 		<td>If you are proxying requests, you can set this to change the proxy port number.</td>
 	</tr>
 	<tr>
+		<td>simulatedProxyDelay</td>
+		<td>undefined</td>
+		<td>A time, in milliseconds, to delay proxy routes in preview mode. This is useful for simulating a slow server.</td>
+	</tr>
+	<tr>
+		<td>simulatedFileDelay</td>
+		<td>undefined</td>
+		<td>A time, in milliseconds, to delay served files in preview mode. This is useful for simulating a slow server.</td>
+	</tr>
+	<tr>
 		<td>routeRewrites</td>
 		<td>undefined</td>
 		<td>An array of objects, each with two string properties, from and to. When the preview server is running, any routes that match the from route will instead call the to route.</td>
@@ -352,6 +362,11 @@ Look at the documentation for each plugin to see the config values it supports. 
 
 
 ## Changelog ##
+
+#### 1.1.7 ####
+
+* Added config options `simulatedProxyDelay` and `simulatedFileDelay` to simulate server delay.
+* Improved verbose logging with pretty colors.
 
 #### 1.1.6 ####
 
