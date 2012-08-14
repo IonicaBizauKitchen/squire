@@ -22,7 +22,11 @@ class PreviewCommand extends lib.squire.Squire
 		@verboseLevel = options.verbose
 		
 		server = lib.httpProxy.createServer (request, response, proxy) =>
-			@handleRequest request, response, proxy, @getRouteUrlInfo(request.url)
+			@handleRequest
+				request:  request
+				response: response
+				proxy:    proxy
+				urlInfo:  @getRouteUrlInfo request.url
 		
 		server.listen options.port
 		
@@ -32,44 +36,72 @@ class PreviewCommand extends lib.squire.Squire
 	
 	
 	# Handles a request. If the request is for an index file, it will rebuild the project.
-	handleRequest: (request, response, proxy, urlInfo) ->
-		urlInfo = @getUrlInfo "#{urlInfo.url}/index.html" if urlInfo.isDirectory
+	handleRequest: (options) ->
+		options.urlInfo = @getUrlInfo "#{options.urlInfo.url}/index.html" if options.urlInfo.isDirectory
 		
-		if urlInfo.baseName is "index"
-			@log "[Build]", 1
+		if options.urlInfo.baseName is "index"
+			@log "[Build]", "Begin", 1, "yellow"
 			
 			commands.build.run mode: "preview", callback: (errors) =>
-				if errors.length > 0
-					@serveErrors request, response, proxy, errors
-				else
-					@serveFile request, response, proxy, urlInfo
+				@log "[Build]", "End", 1, "yellow"
+				options.errors = errors if errors.length > 0
+				@serveResponse options
 		else
-			@serveFile request, response, proxy, urlInfo
+			@serveResponse options
 	
 	
-	# Serves up the file at the given URL.
-	serveFile: (request, response, proxy, urlInfo) ->
-		if lib.fs.existsSync urlInfo.url
-			@log "[Serve] #{urlInfo.relativeUrl}", 2
+	# Serves a response based on the given options. Calls out to one of the helper functions below
+	# depending on the content of options.
+	serveResponse: (options) ->
+		if options.errors?
+			@serveErrors options
+		else if lib.fs.existsSync options.urlInfo.url
+			@serveFile options
+		else if @config.enableProxy
+			@serveProxy options
+		else
+			@serve404 options
+	
+	# Serves a static file.
+	serveFile: (options, delay = @config.simulatedFileDelay) ->
+		{request, response, urlInfo} = options
+		
+		if delay > 0
+			@log "[Delay]", "#{request.url} (#{delay}ms)", 2, "cyan"
+			setTimeout (=> @serveFile options, 0), delay
+		else
+			@log "[Serve]", "#{request.url}", 2, "blue"
 			response.writeHead 200, "Content-Type": lib.mime.lookup(urlInfo.url)
 			response.write lib.fs.readFileSync(urlInfo.url), "binary"
 			response.end()
-		else if @config.enableProxy
-			@log "[Proxy] #{urlInfo.relativeUrl}", 2
-			proxy.proxyRequest request, response, host: @config.proxyHost, port: @config.proxyPort
-		else
-			@log "[Serve] #{urlInfo.relativeUrl} (Not Found)", 2
-			response.writeHead 404, "Content-Type": "text/plain"
-			response.write "404: File #{urlInfo.url} not found."
-			response.end()
 	
+	# Serves a proxied route.
+	serveProxy: (options, delay = @config.simulatedProxyDelay) ->
+		{request, response, proxy, buffer} = options
+		
+		if delay > 0
+			@log "[Delay]", "#{request.url} (#{delay}ms)", 2, "cyan"
+			options.buffer = lib.httpProxy.buffer request
+			setTimeout (=> @serveProxy options, 0), delay
+		else
+			@log "[Proxy]", "#{request.url}", 2, "green"
+			proxy.proxyRequest request, response,
+				host:   @config.proxyHost
+				port:   @config.proxyPort
+				buffer: buffer
 	
 	# Takes in a list of errors generated during the build process and serves them with a 500.
-	serveErrors: (request, response, proxy, errors) ->
+	serveErrors: ({response, errors}) ->
 		response.writeHead 500, "Content-Type": "text/plain"
 		response.write @consolidateErrors errors, "plain"
 		response.end()
 	
+	# Serves a 404 error.
+	serve404: ({request, response, urlInfo}) ->
+		@log "[Serve]", "#{request.url} (Not Found)", 2, "red"
+		response.writeHead 404, "Content-Type": "text/plain"
+		response.write "404: File #{urlInfo.url} not found."
+		response.end()
 	
 	# Does some processing of a given request URL and returns a URL info object.
 	getRouteUrlInfo: (url) ->
@@ -106,9 +138,10 @@ class PreviewCommand extends lib.squire.Squire
 	
 	
 	# A log helper that filters messages based on a verbose level.
-	log: (message, verboseThreshold = 1) ->
-		console.log "<#{@getTimestamp()}> #{message}" if @verboseLevel >= verboseThreshold
-	
+	log: (label, message, verboseThreshold = 1, labelColor = "white") ->
+		timestamp = lib.colors.grey "<#{@getTimestamp()}>"
+		label     = lib.colors[labelColor] label
+		console.log "#{timestamp} #{label} #{message}" if @verboseLevel >= verboseThreshold
 	
 	# Returns a formatted timestamp for the current time.
 	getTimestamp: ->
