@@ -363,6 +363,10 @@ Look at the documentation for each plugin to see the config values it supports. 
 
 ## Changelog ##
 
+#### 1.1.8 ####
+
+* Fixed an issue where the preview server would sometimes not rebuild the project.
+
 #### 1.1.7 ####
 
 * Added config options `simulatedProxyDelay` and `simulatedFileDelay` to simulate server delay.
