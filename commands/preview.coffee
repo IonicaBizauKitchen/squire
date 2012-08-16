@@ -21,12 +21,19 @@ class PreviewCommand extends lib.squire.Squire
 	run: (options) ->
 		@verboseLevel = options.verbose
 		
+		# Create the preview server.
 		server = lib.httpProxy.createServer (request, response, proxy) =>
-			@handleRequest
-				request:  request
-				response: response
-				proxy:    proxy
-				urlInfo:  @getRouteUrlInfo request.url
+			params = {request, response, proxy}
+			
+			# There can be issues if the build folder doesn't exist, so we need to make sure the
+			# project is built before a request is handled.
+			if lib.fs.existsSync @outputPath
+				params.urlInfo = @getRouteUrlInfo request.url
+				@handleRequest params
+			else
+				commands.build.run mode: "preview", callback: (errors) =>
+					params.urlInfo = @getRouteUrlInfo request.url
+					@handleRequest params
 		
 		server.listen options.port
 		
@@ -36,39 +43,41 @@ class PreviewCommand extends lib.squire.Squire
 	
 	
 	# Handles a request. If the request is for an index file, it will rebuild the project.
-	handleRequest: (options) ->
-		options.urlInfo = @getUrlInfo "#{options.urlInfo.url}/index.html" if options.urlInfo.isDirectory
+	handleRequest: (params) ->
+		# Modify the URL to route to an index file if necessary.
+		params.urlInfo = @getUrlInfo "#{params.urlInfo.url}/index.html" if params.urlInfo.isDirectory
 		
-		if options.urlInfo.baseName is "index"
+		# Serve the response.
+		if params.urlInfo.baseName is "index"
 			@log "[Build]", "Begin", 1, "yellow"
 			
 			commands.build.run mode: "preview", callback: (errors) =>
 				@log "[Build]", "End", 1, "yellow"
-				options.errors = errors if errors.length > 0
-				@serveResponse options
+				params.errors = errors if errors.length > 0
+				@serveResponse params
 		else
-			@serveResponse options
+			@serveResponse params
 	
 	
-	# Serves a response based on the given options. Calls out to one of the helper functions below
-	# depending on the content of options.
-	serveResponse: (options) ->
-		if options.errors?
-			@serveErrors options
-		else if lib.fs.existsSync options.urlInfo.url
-			@serveFile options
+	# Serves a response based on the given parameters. Calls out to one of the helper functions
+	# below depending on the content of the params.
+	serveResponse: (params) ->
+		if params.errors?
+			@serveErrors params
+		else if lib.fs.existsSync params.urlInfo.url
+			@serveFile params
 		else if @config.enableProxy
-			@serveProxy options
+			@serveProxy params
 		else
-			@serve404 options
+			@serve404 params
 	
 	# Serves a static file.
-	serveFile: (options, delay = @config.simulatedFileDelay) ->
-		{request, response, urlInfo} = options
+	serveFile: (params, delay = @config.simulatedFileDelay) ->
+		{request, response, urlInfo} = params
 		
 		if delay > 0
 			@log "[Delay]", "#{request.url} (#{delay}ms)", 2, "cyan"
-			setTimeout (=> @serveFile options, 0), delay
+			setTimeout (=> @serveFile params, 0), delay
 		else
 			@log "[Serve]", "#{request.url}", 2, "blue"
 			response.writeHead 200, "Content-Type": lib.mime.lookup(urlInfo.url)
@@ -76,13 +85,13 @@ class PreviewCommand extends lib.squire.Squire
 			response.end()
 	
 	# Serves a proxied route.
-	serveProxy: (options, delay = @config.simulatedProxyDelay) ->
-		{request, response, proxy, buffer} = options
+	serveProxy: (params, delay = @config.simulatedProxyDelay) ->
+		{request, response, proxy, buffer} = params
 		
 		if delay > 0
 			@log "[Delay]", "#{request.url} (#{delay}ms)", 2, "cyan"
-			options.buffer = lib.httpProxy.buffer request
-			setTimeout (=> @serveProxy options, 0), delay
+			params.buffer = lib.httpProxy.buffer request
+			setTimeout (=> @serveProxy params, 0), delay
 		else
 			@log "[Proxy]", "#{request.url}", 2, "green"
 			proxy.proxyRequest request, response,
