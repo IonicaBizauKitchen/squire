@@ -96,9 +96,9 @@ class exports.Squire
 		fancyError   = "\n#{fancyMessage}"
 		
 		if details?
-			details    = "\n#{details}"
-			details    = "\nIn #{url}:\n#{details}" if url?
-			details    = details.replace /\n/g, "\n    "
+			details     = "\n#{details}"
+			details     = "\nIn #{url}:\n#{details}" if url?
+			details     = details.replace /\n/g, "\n    "
 			error      += "\n#{details}"
 			fancyError += "\n#{details}"
 		else if url?

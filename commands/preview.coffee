@@ -41,7 +41,6 @@ class PreviewCommand extends lib.squire.Squire
 		console.log "\nRunning a local server at #{address}"
 		console.log "Everything will be rebuilt each time the browser is refreshed.\n"
 	
-	
 	# Handles a request. If the request is for an index file, it will rebuild the project.
 	handleRequest: (params) ->
 		# Modify the URL to route to an index file if necessary.

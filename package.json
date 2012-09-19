@@ -32,7 +32,8 @@
 		"mime":          "1.2.x",
 		"uglify-js":     "1.3.x",
 		"uglifycss":     "0.0.x",
-		"http-proxy":    "0.8.x"
+		"http-proxy":    "0.8.x",
+		"eco":           "1.1.0-rc-3"
 	},
 	
 	"devDependencies": {

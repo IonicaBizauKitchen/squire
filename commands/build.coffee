@@ -12,6 +12,7 @@ lib =
 	file:   require "file"
 	wrench: require "wrench"
 	colors: require "colors"
+	eco:    require "eco"
 	squire: require "../squire"
 
 
@@ -144,7 +145,14 @@ class BuildCommand extends lib.squire.Squire
 		if inputUrlInfo.isConcatFile
 			@buildConcatFile inputUrlInfo, outputUrlInfo, callback
 		else
-			input          = if inputUrlInfo.plugin.fileType is "text" then @loadTextFile url else @loadFile url
+			input = if inputUrlInfo.plugin.fileType is "text" then @loadTextFile url else @loadFile url
+			
+			try
+				input = lib.eco.render input.toString(), app: @app, config: @config, _: lib._ if inputUrlInfo.isEcoFile
+			catch error
+				callback [@createError "There was an error while compiling your eco file:", error.toString(), url]
+				return
+			
 			renderFunction = if inputUrlInfo.isIndexFile then "renderIndexContent" else "renderContent"
 			
 			inputUrlInfo.plugin[renderFunction] input, { url: url }, (output = "", data, errors = []) =>
@@ -375,7 +383,14 @@ class BuildCommand extends lib.squire.Squire
 		unless info.isDirectory
 			info.isConcatFile = info.fileNameComponents[info.fileNameComponents.length - 2] is "concat"
 			info.isIndexFile  = info.baseName is "index"
-			info.plugin       = @plugins[info.extension] or @defaultPlugin
+			info.isEcoFile    = info.extension is "eco"
+			
+			if info.isEcoFile
+				info.extension = lib.path.extname(info.url[0...-4])[1...]
+				info.isEcoFile = true
+				info.baseName  = info.baseName[0...-(info.extension.length + 1)]
+			
+			info.plugin = @plugins[info.extension] or @defaultPlugin
 		
 		info
 	
@@ -384,7 +399,7 @@ class BuildCommand extends lib.squire.Squire
 	# output URL.
 	getOutputUrlInfo: (inputUrlInfo) ->
 		outputPath      = lib.path.join @outputPath, inputUrlInfo.relativePath
-		outputBaseName  = inputUrlInfo.baseName.replace ".concat", ""
+		outputBaseName  = inputUrlInfo.baseName.replace(".concat", "").replace ".eco", ""
 		outputExtension = if inputUrlInfo.isIndexFile then "html" else inputUrlInfo.plugin.outputExtension or inputUrlInfo.extension
 		outputUrl       = "#{outputPath}/#{outputBaseName}"
 		outputUrl      += ".#{outputExtension}" if outputExtension
