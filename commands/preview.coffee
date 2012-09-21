@@ -8,15 +8,14 @@ lib =
 	fs:        require "fs"
 	httpProxy: require "http-proxy"
 	path:      require "path"
-	squire:    require "../squire"
 	colors:    require "colors"
 	mime:      require "mime"
+	squire:    require "../squire"
 
 commands =
 	build: require "./build"
 
-
-class PreviewCommand extends lib.squire.Squire
+PreviewCommand = class extends lib.squire.Squire
 	# The entry point to the command.
 	run: (options) ->
 		@verboseLevel = options.verbose
@@ -44,7 +43,7 @@ class PreviewCommand extends lib.squire.Squire
 	# Handles a request. If the request is for an index file, it will rebuild the project.
 	handleRequest: (params) ->
 		# Modify the URL to route to an index file if necessary.
-		params.urlInfo = @getUrlInfo "#{params.urlInfo.url}/index.html" if params.urlInfo.isDirectory
+		params.urlInfo = new lib.squire.UrlInfo "#{params.urlInfo.url}/index.html" if params.urlInfo.isDirectory
 		
 		# Serve the response.
 		if params.urlInfo.baseName is "index"
@@ -142,7 +141,7 @@ class PreviewCommand extends lib.squire.Squire
 				break
 		
 		url = lib.path.join @outputPath, url
-		@getUrlInfo url, @outputPath
+		new lib.squire.UrlInfo url, @outputPath
 	
 	
 	# A log helper that filters messages based on a verbose level.

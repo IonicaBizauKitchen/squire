@@ -6,10 +6,10 @@
 
 lib =
 	fs:     require "fs"
-	squire: require "../squire"
 	coffee: require "coffee-script"
 	merge:  require "deepmerge"
 	_:      require "underscore"
+	squire: require "../squire"
 
 class exports.Plugin extends lib.squire.SquirePlugin
 	inputExtensions: ["coffee"]

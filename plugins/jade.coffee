@@ -6,9 +6,9 @@
 
 lib =
 	jade:   require "jade"
-	squire: require "../squire"
 	fs:     require "fs"
 	merge:  require "deepmerge"
+	squire: require "../squire"
 
 class exports.Plugin extends lib.squire.SquirePlugin
 	inputExtensions: ["jade"]

@@ -6,8 +6,8 @@
 
 lib =
 	markdown: require("markdown-js").markdown
-	squire:   require "../squire"
 	cson:     require "cson"
+	squire:   require "../squire"
 
 class exports.Plugin extends lib.squire.SquirePlugin
 	inputExtensions: ["md", "markdown"]

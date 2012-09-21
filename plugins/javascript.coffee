@@ -5,8 +5,8 @@
 ##
 
 lib =
-	squire: require "../squire"
 	uglify: require "uglify-js"
+	squire: require "../squire"
 
 class exports.Plugin extends lib.squire.SquirePlugin
 	inputExtensions: ["js"]

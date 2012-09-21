@@ -7,8 +7,8 @@
 lib =
 	stylus: require "stylus"
 	nib:    require "nib"
-	squire: require "../squire"
 	fs:     require "fs"
+	squire: require "../squire"
 
 class exports.Plugin extends lib.squire.SquirePlugin
 	inputExtensions: ["styl"]
