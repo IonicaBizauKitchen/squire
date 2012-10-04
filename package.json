@@ -33,7 +33,8 @@
 		"uglify-js":     "1.3.x",
 		"uglifycss":     "0.0.x",
 		"http-proxy":    "0.8.x",
-		"eco":           "1.1.0-rc-3"
+		"eco":           "1.1.0-rc-3",
+		"fibers":        "0.6.9"
 	},
 	
 	"devDependencies": {
@@ -48,7 +49,7 @@
 		"node": ">=0.7.1"
 	},
 	
-	"main": "./squire.coffee",
+	"main": "./main.coffee",
 	
 	"bin": {
 		"squire": "./bin/squire"

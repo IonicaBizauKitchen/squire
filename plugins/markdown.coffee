@@ -5,11 +5,11 @@
 ##
 
 lib =
+	squire:   require "../main"
 	markdown: require("markdown-js").markdown
 	cson:     require "cson"
-	squire:   require "../squire"
 
-class exports.Plugin extends lib.squire.SquirePlugin
+class MarkdownPlugin extends lib.squire.Plugin
 	inputExtensions: ["md", "markdown"]
 	outputExtension: "html"
 	
@@ -24,7 +24,7 @@ class exports.Plugin extends lib.squire.SquirePlugin
 		[markdown, data] = @parseInput input
 		
 		if data.constructor is Error
-			callback null, null, [@createError "There was an error while parsing your Markdown file's CSON header data.", data.toString(), options.url]
+			callback null, null, [@createError message: "There was an error while parsing your Markdown file's CSON header data.", details: data.toString(), path: options.path]
 		else
 			html = lib.markdown markdown
 			
@@ -33,17 +33,17 @@ class exports.Plugin extends lib.squire.SquirePlugin
 				
 				if templatePlugin?
 					localsProperty = @config.localsProperty
-					templateUrl    = "#{@appPath}/#{data.template}"
-					template       = @loadTextFile templateUrl
+					templatePath   = "#{@appPath}/#{data.template}"
+					template       = @loadTextFile templatePath
 					
 					if template?
-						templateOptions                 = { url: templateUrl }
+						templateOptions                 = { path: templatePath }
 						templateOptions[localsProperty] = { data: data, html: html }
 						templatePlugin.renderIndexContent template, templateOptions, callback
 					else
-						callback null, null, [@createError "Template file does not exist at #{templateUrl}."]
+						callback null, null, [@createError message: "Template file does not exist at #{templatePath}."]
 				else
-					callback null, null, [@createError "Unable to load plugin #{@config.templatePlugin}.", null, options.url]
+					callback null, null, [@createError message: "Unable to load plugin #{@config.templatePlugin}.", path: options.path]
 			else
 				callback html, data
 	
@@ -93,3 +93,6 @@ class exports.Plugin extends lib.squire.SquirePlugin
 		data.sections = sections
 		
 		[markdown, data]
+
+# Expose plugin.
+exports.Plugin = MarkdownPlugin

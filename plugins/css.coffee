@@ -5,10 +5,10 @@
 ##
 
 lib =
+	squire: require "../main"
 	uglify: require "uglifycss"
-	squire: require "../squire"
 
-class exports.Plugin extends lib.squire.SquirePlugin
+class exports.Plugin extends lib.squire.Plugin
 	inputExtensions: ["css"]
 	outputExtension: "css"
 	

@@ -176,9 +176,9 @@ The built-in Jade plugin, for example, will pass along the app tree as a local v
 
 See the documentation for each plugin for details on how they make use of the app tree.
 
-The tree is made up of SquireDirectories and SquireFiles, which are documented below. The app tree itself is a SquireDirectory.
+The tree is made up of SquireDirectories and Files, which are documented below. The app tree itself is a Directory.
 
-### SquireDirectory ###
+### Directory ###
 
 <table>
 	<tr>
@@ -204,12 +204,12 @@ The tree is made up of SquireDirectories and SquireFiles, which are documented b
 	<tr>
 		<td>files</td>
 		<td>Object</td>
-		<td>An object with a key-value pair for each file in the directory. The keys are the names of the files, and the values are instances of SquireFile.</td>
+		<td>An object with a key-value pair for each file in the directory. The keys are the names of the files, and the values are instances of File.</td>
 	</tr>
 	<tr>
 		<td>directories</td>
 		<td>Object</td>
-		<td>An object with a key-value pair for each subdirectory in the directory. The keys are the names of the directories, and the values are instances of SquireDirectory.</td>
+		<td>An object with a key-value pair for each subdirectory in the directory. The keys are the names of the directories, and the values are instances of Directory.</td>
 	</tr>
 	<tr>
 		<td>getPath</td>
@@ -231,7 +231,7 @@ The tree is made up of SquireDirectories and SquireFiles, which are documented b
 	</tr>
 </table>
 
-### SquireFile ###
+### File ###
 
 <table>
 	<tr>

@@ -1,19 +1,18 @@
 ##
-## classes/squire_plugin.coffee
+## core/plugin.coffee
 ## 
 ## Define the base Squire plugin class that's used for all plugins.
 ##
 
 lib =
-	fs:     require "fs"
 	cson:   require "cson"
+	fs:     require "fs"
 	merge:  require "deepmerge"
-	squire: require "../squire"
+	squire: require "../main"
 
-# The base plugin class, to be extended by actual plugins.
-exports.SquirePlugin = class extends lib.squire.Squire
+class Plugin extends lib.squire.Squire
 	configDefaults: {}
-	fileType:       "text"
+	contentType:    "text"
 	
 	constructor: (options = {}) ->
 		super
@@ -36,9 +35,9 @@ exports.SquirePlugin = class extends lib.squire.Squire
 		
 		recursiveRender = (index) =>
 			input = inputs[index].toString()
-			url   = options.urls?[index]
+			path   = options.paths?[index]
 			
-			@renderContent input, (if url? then { url: url } else {}), (output, data, errors) ->
+			@renderContent input, (if path? then {path} else {}), (output, data, errors) ->
 				if errors?
 					allErrors = allErrors.concat errors
 				else
@@ -64,3 +63,10 @@ exports.SquirePlugin = class extends lib.squire.Squire
 	postProcessContent: (input, options, callback) ->
 		# By default, post processing does nothing.
 		callback input
+	
+	# A convenience function for plugins to allow them to create errors without knowing about the
+	# Error class.
+	createError: (options) -> new lib.squire.Error options
+
+# Expose class.
+exports.Plugin = Plugin

@@ -5,13 +5,13 @@
 ##
 
 lib =
+	squire: require "../main"
 	fs:     require "fs"
 	coffee: require "coffee-script"
 	merge:  require "deepmerge"
 	_:      require "underscore"
-	squire: require "../squire"
 
-class exports.Plugin extends lib.squire.SquirePlugin
+class CoffeeScriptPlugin extends lib.squire.Plugin
 	inputExtensions: ["coffee"]
 	outputExtension: "js"
 	
@@ -29,7 +29,7 @@ class exports.Plugin extends lib.squire.SquirePlugin
 		try
 			js = lib.coffee.compile input, compilerOptions
 		catch compileError
-			errors = [@createCoffeeScriptError compileError, options.url]
+			errors = [@createCoffeeScriptError error: compileError, path: options.path]
 		
 		callback js, null, errors
 	
@@ -42,9 +42,9 @@ class exports.Plugin extends lib.squire.SquirePlugin
 		builtFileCount = 0
 		
 		for input, index in inputs
-			url = options.urls?[index]
+			path = options.paths?[index]
 			
-			@renderContent input, (if url? then { url: url } else {}), (output, data, errors = []) =>
+			@renderContent input, (if url? then {path} else {}), (output, data, errors = []) =>
 				allErrors = allErrors.concat errors
 				outputs.push output
 				
@@ -63,7 +63,7 @@ class exports.Plugin extends lib.squire.SquirePlugin
 			try
 				input = lib.coffee.eval input
 			catch error
-				callback null, null, [@createCoffeeScriptError error, options.url]
+				callback null, null, [@createCoffeeScriptError error: error, path: options.path]
 				return
 			
 			dataFunction = input.pageData or input.pageDataAsync
@@ -74,15 +74,15 @@ class exports.Plugin extends lib.squire.SquirePlugin
 				done = (data) =>
 					if data?.template?
 						localsProperty = @config.localsProperty
-						templateUrl    = "#{@appPath}/#{data.template}"
-						template       = @loadTextFile data.template
+						templatePath   = "#{@appPath}/#{data.template}"
+						template       = @loadTextFile templatePath
 						
 						if template?
-							templateOptions                 = { url: templateUrl }
-							templateOptions[localsProperty] = { data: data }
+							templateOptions                 = path: templatePath
+							templateOptions[localsProperty] = data: data
 							templatePlugin.renderIndexContent template, templateOptions, callback
 						else
-							callback null, null, [@createError "Template file does not exist at #{templateUrl}."]
+							callback null, null, [@createError message: "Template file does not exist at #{templatePath}."]
 					else
 						super
 				
@@ -95,6 +95,10 @@ class exports.Plugin extends lib.squire.SquirePlugin
 		else
 			super
 	
-	createCoffeeScriptError: (error, url, verb = "compiling") ->
-		message = error.toString().split("\n")[0]
-		@createError "There was an error while #{verb} your CoffeeScript:", message, url
+	createCoffeeScriptError: (options) ->
+		options.message     = "There was an error while compiling your CoffeeScript:"
+		options.description = options.error.toString().split("\n")[0]
+		@createError options
+
+# Expose plugin.
+exports.Plugin = CoffeeScriptPlugin

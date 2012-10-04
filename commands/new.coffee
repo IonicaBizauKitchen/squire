@@ -5,14 +5,14 @@
 ##
 
 lib =
+	squire: require "../main"
 	fs:     require "fs"
 	path:   require "path"
 	wrench: require "wrench"
 	exec:   require("child_process").exec
 	colors: require "colors"
-	squire: require "../squire"
 
-NewCommand = class extends lib.squire.Squire
+class NewCommand extends lib.squire.Squire
 	# The entry point to the command.
 	run: (options) ->
 		templatePath         = "#{@squirePath}/templates"

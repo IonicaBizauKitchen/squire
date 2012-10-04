@@ -5,10 +5,10 @@
 ##
 
 lib =
+	squire: require "../main"
 	uglify: require "uglify-js"
-	squire: require "../squire"
 
-class exports.Plugin extends lib.squire.SquirePlugin
+class JavaScriptPlugin extends lib.squire.Plugin
 	inputExtensions: ["js"]
 	outputExtension: "js"
 	
@@ -26,7 +26,7 @@ class exports.Plugin extends lib.squire.SquirePlugin
 				syntaxTree = lib.uglify.uglify.ast_squeeze syntaxTree
 				js         = lib.uglify.uglify.gen_code syntaxTree
 			catch parseError
-				errors = [@createCoffeeScriptError "There was an error while minifying your JavaScript:", error.toString(), options.url]
+				errors = [@createError message: "There was an error while minifying your JavaScript:", details: error.toString(), path: options.path]
 		
 		if @config.useStrict
 			js = "\"use strict\";\n\n#{js}"
@@ -37,3 +37,6 @@ class exports.Plugin extends lib.squire.SquirePlugin
 			js               = "#{constantsString}\n#{js}"
 		
 		callback js, null, errors
+
+# Expose plugin.
+exports.Plugin = JavaScriptPlugin
