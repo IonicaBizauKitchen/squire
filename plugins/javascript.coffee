@@ -25,7 +25,7 @@ class JavaScriptPlugin extends lib.squire.Plugin
 				syntaxTree = lib.uglify.uglify.ast_mangle syntaxTree
 				syntaxTree = lib.uglify.uglify.ast_squeeze syntaxTree
 				js         = lib.uglify.uglify.gen_code syntaxTree
-			catch parseError
+			catch error
 				errors = [@createError message: "There was an error while minifying your JavaScript:", details: error.toString(), path: options.path]
 		
 		if @config.useStrict

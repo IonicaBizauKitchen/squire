@@ -5,12 +5,13 @@
 ##
 
 lib =
-	_:      require "underscore"
-	file:   require "file"
-	fs:     require "fs"
-	merge:  require "deepmerge"
-	path:   require "path"
-	squire: require "../main"
+	_:               require "underscore"
+	file:            require "file"
+	fs:              require "fs"
+	makeSynchronous: require "make-synchronous"
+	merge:           require "deepmerge"
+	path:            require "path"
+	squire:          require "../main"
 
 class File extends lib.squire.Squire
 	constructor: ({path} = {}) ->
@@ -125,7 +126,7 @@ class File extends lib.squire.Squire
 		chunkOutputs = []
 		
 		for chunk in chunks
-			@makeSynchronous chunk.plugin, chunk.plugin.renderContentList, chunk.inputs, { paths: chunk.paths }, (output, data = {}, errors = []) =>
+			lib.makeSynchronous chunk.plugin, chunk.plugin.renderContentList, chunk.inputs, { paths: chunk.paths }, (output, data = {}, errors = []) =>
 				chunkOutputs.push output if output?
 				@errors = @errors.concat errors
 				@data   = lib.merge @data, data
@@ -139,7 +140,7 @@ class File extends lib.squire.Squire
 		
 		renderFunction = if @url.isIndexFile then "renderIndexContent" else "renderContent"
 		
-		@makeSynchronous @plugin, @plugin[renderFunction], @content, { path: @url.path }, (output, data = {}, errors = []) =>
+		lib.makeSynchronous @plugin, @plugin[renderFunction], @content, { path: @url.path }, (output, data = {}, errors = []) =>
 			@content = output
 			@errors  = @errors.concat errors
 			@data    = lib.merge @data, data
@@ -152,7 +153,7 @@ class File extends lib.squire.Squire
 		for plugin in @postProcessPlugins
 			break if @errors.length > 0
 			
-			@makeSynchronous plugin, plugin.postProcessContent, @content, {}, (output, data = {}, errors = []) =>
+			lib.makeSynchronous plugin, plugin.postProcessContent, @content, {}, (output, data = {}, errors = []) =>
 				@content = output
 				@errors  = @errors.concat errors
 				@data    = lib.merge @data, data

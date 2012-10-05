@@ -7,7 +7,6 @@
 
 lib =
 	cson:   require "cson"
-	fibers: require "fibers"
 	fs:     require "fs"
 	merge:  require "deepmerge"
 	path:   require "path"
@@ -123,29 +122,6 @@ class Squire
 	# The same as above, but will automatically convert the loaded file buffer to a string.
 	loadTextFile: (path) ->
 		@loadFile(path)?.toString()
-	
-	# A helper utility to make an asynchronous function synchronous. Takes three arguments at a
-	# minimum -- the owner of the function (that is, the "this" value inside the function,
-	# typically the object the function is defined on), the function itself, and a callback
-	# function that will be called when the asynchronous function is done running. The callback
-	# will be called synchronously. You can also pass in an arbitrary number of arguments to the
-	# function as arguments between the function and the callback.
-	makeSynchronous: (owner, f, args..., callback) ->
-		throw "makeSynchronous requires a callback function as its last parameter." unless typeof callback is "function"
-		
-		fiber = lib.fibers.current
-		
-		setTimeout (->
-			(lib.fibers ->
-				args.push (callbackArgs...) ->
-					callback.apply owner, callbackArgs
-					fiber.run()
-				
-				f.apply owner, args
-			).run()
-		), 0
-		
-		lib.fibers.yield()
 
 # Expose class.
 exports.Squire = Squire
