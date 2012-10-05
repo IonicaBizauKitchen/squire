@@ -34,7 +34,8 @@
 		"uglifycss":     "0.0.x",
 		"http-proxy":    "0.8.x",
 		"eco":           "1.1.0-rc-3",
-		"fibers":        "0.6.9"
+		"fibers":        "0.6.9",
+		"watchr":        "2.1.5"
 	},
 	
 	"devDependencies": {

@@ -12,24 +12,24 @@ exports.Error = class Error
 	@log: (options) -> (new exports.Error options).log options.fancy
 	
 	constructor: ({message, details, path}) ->
-		@message      = "\n#{message}"
+		@plainMessage = "\n#{message}"
 		@fancyMessage = "\n" + lib.colors.red "\u2718 #{message}"
 		
 		if details?
 			details        = "\n#{details}"
 			details        = "\nIn #{path}:\n#{details}" if path?
 			details        = details.replace /\n/g, "\n    "
-			@message      += "\n#{details}"
+			@plainMessage += "\n#{details}"
 			@fancyMessage += "\n#{details}"
 		else if path?
-			@message      += "\n\n    In #{path}"
+			@plainMessage += "\n\n    In #{path}"
 			@fancyMessage += "\n\n    In #{path}"
 		
-		@message      += "\n"
+		@plainMessage += "\n"
 		@fancyMessage += "\n"
 	
 	log: (fancy = true) ->
-		console.error if fancy then @fancyMessage else @message
+		console.error if fancy then @fancyMessage else @plainMessage
 	
 	toString: -> @message
 

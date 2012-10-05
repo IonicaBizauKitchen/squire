@@ -96,8 +96,8 @@ class CoffeeScriptPlugin extends lib.squire.Plugin
 			super
 	
 	createCoffeeScriptError: (options) ->
-		options.message     = "There was an error while compiling your CoffeeScript:"
-		options.description = options.error.toString().split("\n")[0]
+		options.message = "There was an error while compiling your CoffeeScript:"
+		options.details = options.error.toString().split("\n")[0]
 		@createError options
 
 # Expose plugin.

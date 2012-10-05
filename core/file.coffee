@@ -15,8 +15,7 @@ lib =
 class File extends lib.squire.Squire
 	constructor: ({path} = {}) ->
 		super
-		@url    = new lib.squire.Url path
-		@errors = []
+		@url = new lib.squire.Url path
 	
 	# The raw content of the file before it gets processed.
 	Object.defineProperty @prototype, "rawContent", get: ->
@@ -39,6 +38,14 @@ class File extends lib.squire.Squire
 		
 		set: (@_data) ->
 	
+	# Same thing but for errors.
+	Object.defineProperty @prototype, "errors",
+		get: ->
+			@build() if @_errors is undefined
+			@_errors
+		
+		set: (@_errors) ->
+	
 	# The file's plugin. Just proxies to the URL's plugin for convenience.
 	Object.defineProperty @prototype, "plugin", get: -> @url?.plugin
 	
@@ -49,8 +56,16 @@ class File extends lib.squire.Squire
 		
 		plugin for plugin in @plugins when extension in (plugin.postProcessExtensions or [plugin.outputExtension])
 	
+	# Returns the parent directory.
+	Object.defineProperty @prototype, "parent", get: ->
+		relativeDirectory = @url.directory[@app.url.path.length...]
+		@app?.getPath(relativeDirectory).url.path
+	
 	# Resets the content cache so that the next time content is requested it will be rebuilt.
-	reloadContent: -> delete @_content
+	reloadContent: ->
+		delete @_content
+		delete @_data
+		delete @_errors
 	
 	# Builds the file at our path and returns the built content. This is only needed internally --
 	# generally you should use the "content" property to retrieve the content.

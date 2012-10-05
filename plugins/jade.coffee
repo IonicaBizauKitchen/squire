@@ -24,7 +24,6 @@ class JadePlugin extends lib.squire.Plugin
 			locals.config   = @config
 			html            = compileFunction locals
 		catch error
-			# TODO: Is it possible to get a line number from the error?
 			callback null, null, [@createError message: "There was an error while compiling your Jade template.", details: error.toString(), path: options.path]
 			return
 		

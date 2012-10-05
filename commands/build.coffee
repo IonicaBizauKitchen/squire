@@ -5,6 +5,7 @@
 ##
 
 lib =
+	fibers: require "fibers"
 	file:   require "file"
 	fs:     require "fs"
 	squire: require "../main"
@@ -13,6 +14,8 @@ lib =
 class BuildCommand extends lib.squire.Squire
 	# The entry point to the command.
 	run: (options) ->
+		options.shouldLogErrors ?= true
+		
 		# Make sure we've got our directories set up properly.
 		unless lib.fs.existsSync @appPath
 			lib.squire.Error.log "Configured application path #{@appPath} does not exist."
@@ -26,21 +29,25 @@ class BuildCommand extends lib.squire.Squire
 		@cleanBuildFolder()
 		
 		# Construct the app tree.
-		@app = new lib.squire.Directory path: @appPath
+		@app           = new lib.squire.Directory path: @appPath
+		inputDirectory = @app.getPath @config.inputDirectory
 		
 		# Walk the input directory and spit out each file.
-		@app.getPath(@config.inputDirectory).walk (directory) ->
+		inputDirectory.walk (directory) ->
 			for name, file of directory.files
 				outputUrl = file.url.outputUrl
 				lib.file.mkdirsSync outputUrl.directory, 0o0755 # TODO: We only need to do this once per directory.
 				lib.fs.writeFileSync file.url.outputUrl.path, file.content
 		
 		# If there were any errors, log them, and clean out the build folder.
-		errorMessage = @app.consolidateErrors()
+		errorMessage = inputDirectory.consolidateErrors()
 		
 		if errorMessage.length > 0
-			console.error errorMessage
+			console.error errorMessage if options.shouldLogErrors
 			@cleanBuildFolder()
+		
+		# Call the callback.
+		options.callback?()
 	
 	# Cleans out the build folder.
 	cleanBuildFolder: ->
@@ -49,4 +56,8 @@ class BuildCommand extends lib.squire.Squire
 		lib.wrench.rmdirSyncRecursive @outputPath, true if @outputPath.indexOf(@projectPath) is 0
 
 # We only expose the run function.
-exports.run = (options) -> (new BuildCommand mode: options.mode).run options
+exports.run = (options) ->
+	# The command needs to be run inside of a fiber.
+	(lib.fibers ->
+		(new BuildCommand mode: options.mode).run options
+	).run()

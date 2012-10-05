@@ -13,75 +13,70 @@ lib =
 	path:   require "path"
 	fibers: require "fibers"
 
-# Run everything inside of a fiber.
-fiber = lib.fibers ->
-	commands =
-		new:     require "../commands/new"
-		preview: require "../commands/preview"
-		build:   require "../commands/build"
-	
-	# A little hack to print help when the command is run with no arguments.
-	process.argv[2] = "-h" if process.argv.length < 3
-	
-	# A helper function to grab the list of available templates.
-	getTemplateList = ->
-		templatePath = lib.path.join __dirname, "../templates"
-		templates    = (path for path in lib.fs.readdirSync(templatePath) when path[0] isnt ".")
-		templates.join ", "
-	
-	# A helper function that will return the current version.
-	getVersion = ->
-		packagePath = lib.path.join __dirname, "../package.json"
-		file        = lib.fs.readFileSync(packagePath).toString()
-		"v" + JSON.parse(file).version
-	
-	# Configure nomnom and set up our commands.
-	lib.nomnom.script("squire").colors()
-	
-	lib.nomnom.command("new").
-		help("Create a new project.").
-		options(
-			path:
-				position: 1
-				help:     "The path in which to initialize the project."
-				default:  "."
-			template:
-				abbr:    "t"
-				help:    "The template to use for the project. Available templates: #{getTemplateList()}"
-				default: "basic"
-		).
-		callback (options) -> commands.new.run options
-	
-	lib.nomnom.command("preview").
-		help("Start a preview server.").
-		options(
-			port:
-				abbr:    "p"
-				help:    "The port number to use for the preview server."
-				default: 6400
-			verbose:
-				abbr:    "v"
-				help:    "A verboseness level between 0 and 2. 0 = no text, 1 = some text, 2 = lots of text."
-				default: 0
-		).
-		callback (options) -> commands.preview.run options
-	
-	lib.nomnom.command("build").
-		help("Build your project.").
-		options(
-			mode:
-				abbr:    "m"
-				help:    "Specifies the build mode, which affects which config values are used."
-				default: "build"
-		).
-		callback (options) -> commands.build.run options
-	
-	lib.nomnom.command("version").
-		help("Print the current version.").
-		callback (options) -> console.log getVersion()
-	
-	# Parse the arguments.
-	args = lib.nomnom.parse()
+commands =
+	new:     require "../commands/new"
+	preview: require "../commands/preview"
+	build:   require "../commands/build"
 
-# Run the fiber.
-fiber.run()
+# A little hack to print help when the command is run with no arguments.
+process.argv[2] = "-h" if process.argv.length < 3
+
+# A helper function to grab the list of available templates.
+getTemplateList = ->
+	templatePath = lib.path.join __dirname, "../templates"
+	templates    = (path for path in lib.fs.readdirSync(templatePath) when path[0] isnt ".")
+	templates.join ", "
+
+# A helper function that will return the current version.
+getVersion = ->
+	packagePath = lib.path.join __dirname, "../package.json"
+	file        = lib.fs.readFileSync(packagePath).toString()
+	"v" + JSON.parse(file).version
+
+# Configure nomnom and set up our commands.
+lib.nomnom.script("squire").colors()
+
+lib.nomnom.command("new").
+	help("Create a new project.").
+	options(
+		path:
+			position: 1
+			help:     "The path in which to initialize the project."
+			default:  "."
+		template:
+			abbr:    "t"
+			help:    "The template to use for the project. Available templates: #{getTemplateList()}"
+			default: "basic"
+	).
+	callback (options) -> commands.new.run options
+
+lib.nomnom.command("preview").
+	help("Start a preview server.").
+	options(
+		port:
+			abbr:    "p"
+			help:    "The port number to use for the preview server."
+			default: 6400
+		verbose:
+			abbr:    "v"
+			help:    "A verboseness level between 0 and 2. 0 = no text, 1 = some text, 2 = lots of text."
+			default: 0
+	).
+	callback (options) -> commands.preview.run options
+
+lib.nomnom.command("build").
+	help("Build your project.").
+	options(
+		mode:
+			abbr:    "m"
+			help:    "Specifies the build mode, which affects which config values are used."
+			default: "build"
+	).
+	callback (options) -> commands.build.run options
+
+lib.nomnom.command("version").
+	help("Print the current version.").
+	callback (options) -> console.log getVersion()
+
+# Parse the arguments.
+args = lib.nomnom.parse()
