@@ -48,7 +48,7 @@ class File extends lib.squire.Squire
 		set: (@_errors) ->
 	
 	# The file's plugin. Just proxies to the URL's plugin for convenience.
-	Object.defineProperty @prototype, "plugin", get: -> @url?.plugin
+	Object.defineProperty @prototype, "plugin", get: -> @plugins[@url.extension] or @defaultPlugin
 	
 	# Returns the list of plugins that can post-process this file.
 	Object.defineProperty @prototype, "postProcessPlugins", get: ->
@@ -61,6 +61,15 @@ class File extends lib.squire.Squire
 	Object.defineProperty @prototype, "parent", get: ->
 		relativeDirectory = @url.directory[@app.url.path.length...]
 		@app?.getPath(relativeDirectory).url.path
+	
+	# Returns the output URL for this file.
+	Object.defineProperty @prototype, "outputUrl", get: ->
+		outputDirectory = lib.path.join @outputPath, @url.relativeDirectory
+		outputBaseName  = @url.baseName.replace(".concat", "").replace ".eco", ""
+		outputExtension = if @url.isIndexFile then "html" else @plugin.outputExtension or @url.extension
+		outputPath      = "#{outputDirectory}/#{outputBaseName}"
+		outputPath     += ".#{outputExtension}" if outputExtension
+		new lib.squire.Url outputPath, @outputPath
 	
 	# Resets the content cache so that the next time content is requested it will be rebuilt.
 	reloadContent: ->
@@ -112,14 +121,15 @@ class File extends lib.squire.Squire
 		currentChunk = null
 		
 		for path in paths
-			url   = new lib.squire.Url path, @inputPath
-			input = @loadTextFile path
+			url    = new lib.squire.Url path, @inputPath
+			input  = @loadTextFile path
+			plugin = @plugins[url.extension] or @defaultPlugin
 			
-			if url.plugin is currentChunk?.plugin
+			if plugin is currentChunk?.plugin
 				currentChunk.inputs.push input
 				currentChunk.paths.push  path
 			else
-				currentChunk = { plugin: url.plugin, inputs: [input], paths: [path] }
+				currentChunk = { plugin: plugin, inputs: [input], paths: [path] }
 				chunks.push currentChunk
 		
 		# Build each chunk.

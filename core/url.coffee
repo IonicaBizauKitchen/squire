@@ -11,8 +11,8 @@ lib =
 	wrench: require "wrench"
 
 # We need a Squire instance to get things like the output path, plugins, etc.
-# TODO: This is no good, we need the mode...
-squire = new lib.squire.Squire mode: "preview"
+# TODO: Need to get rid of this. We have no way of setting the mode properly.
+squire = new lib.squire.Squire
 
 class Url
 	constructor: (@path) ->
@@ -51,17 +51,10 @@ class Url
 	Object.defineProperty @prototype, "isConcatFile", get: -> @fileNameComponents[1] is "concat"
 	Object.defineProperty @prototype, "isIndexFile",  get: -> @baseName is "index"
 	Object.defineProperty @prototype, "isEcoFile",    get: -> @extension is "eco"
-	Object.defineProperty @prototype, "plugin",       get: -> squire.plugins[@extension] or squire.defaultPlugin
 	
-	Object.defineProperty @prototype, "outputUrl", get: ->
-		outputDirectory = lib.path.join squire.outputPath, @relativeDirectory
-		outputBaseName  = @baseName.replace(".concat", "").replace ".eco", ""
-		outputExtension = if @isIndexFile then "html" else @plugin.outputExtension or @extension
-		outputPath      = "#{outputDirectory}/#{outputBaseName}"
-		outputPath     += ".#{outputExtension}" if outputExtension
-		new Url outputPath, squire.outputPath
-	
-	# Returns a list of absolute paths to the dependent files for this URL based on require statements.
+	# Returns a list of absolute paths to the dependent files for this URL based on require
+	# statements.
+	# TODO: This should probably be on the file.
 	Object.defineProperty @prototype, "dependentPaths", get: ->
 		reader = new lib.wrench.LineReader @path
 		result = []

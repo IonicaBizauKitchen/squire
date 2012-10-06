@@ -35,9 +35,9 @@ class BuildCommand extends lib.squire.Squire
 		# Walk the input directory and spit out each file.
 		inputDirectory.walk (directory) ->
 			for name, file of directory.files
-				outputUrl = file.url.outputUrl
+				outputUrl = file.outputUrl
 				lib.file.mkdirsSync outputUrl.directory, 0o0755 # TODO: We only need to do this once per directory.
-				lib.fs.writeFileSync file.url.outputUrl.path, file.content
+				lib.fs.writeFileSync outputUrl.path, file.content
 		
 		# If there were any errors, log them, and clean out the build folder.
 		errorMessage = inputDirectory.consolidateErrors()
