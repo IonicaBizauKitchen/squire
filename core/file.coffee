@@ -153,7 +153,7 @@ class File extends lib.squire.Squire
 		for plugin in @postProcessPlugins
 			break if @errors.length > 0
 			
-			lib.makeSynchronous plugin, plugin.postProcessContent, @content, {}, (output, data = {}, errors = []) =>
+			lib.makeSynchronous plugin, plugin.postProcessContent, @content, { path: @url.path }, (output, data = {}, errors = []) =>
 				@content = output
 				@errors  = @errors.concat errors
 				@data    = lib.merge @data, data

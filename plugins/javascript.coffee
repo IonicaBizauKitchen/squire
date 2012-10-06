@@ -23,7 +23,9 @@ class JavaScriptPlugin extends lib.squire.Plugin
 			try
 				syntaxTree = lib.uglify.parser.parse js
 				syntaxTree = lib.uglify.uglify.ast_mangle syntaxTree
-				syntaxTree = lib.uglify.uglify.ast_squeeze syntaxTree
+				# The "make_seqs" option is disabled for now because it causes problems for some
+				# code. We should make it configurable.
+				syntaxTree = lib.uglify.uglify.ast_squeeze syntaxTree, make_seqs: false
 				js         = lib.uglify.uglify.gen_code syntaxTree
 			catch error
 				errors = [@createError message: "There was an error while minifying your JavaScript:", details: error.toString(), path: options.path]

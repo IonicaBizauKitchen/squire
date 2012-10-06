@@ -71,7 +71,7 @@ class Squire
 	# automatically as necessary when trying to access the plugins property. You can call it if you
 	# need to reload the plugins, however.
 	loadPlugins: ->
-		staticData.defaultPlugin             = new lib.squire.Plugin id: "default"
+		staticData.defaultPlugin             = new lib.squire.Plugin id: "default", mode: @mode
 		staticData.defaultPlugin.contentType = "binary"
 		staticData.plugins                   = []
 		

@@ -11,7 +11,8 @@ lib =
 	wrench: require "wrench"
 
 # We need a Squire instance to get things like the output path, plugins, etc.
-squire = new lib.squire.Squire
+# TODO: This is no good, we need the mode...
+squire = new lib.squire.Squire mode: "preview"
 
 class Url
 	constructor: (@path) ->

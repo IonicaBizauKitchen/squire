@@ -29,7 +29,7 @@ class BuildCommand extends lib.squire.Squire
 		@cleanBuildFolder()
 		
 		# Construct the app tree.
-		@app           = new lib.squire.Directory path: @appPath
+		@app           = new lib.squire.Directory mode: @mode, path: @appPath
 		inputDirectory = @app.getPath @config.inputDirectory
 		
 		# Walk the input directory and spit out each file.

@@ -41,10 +41,12 @@ class PreviewCommand extends lib.squire.Squire
 		@verboseLevel = options.verbose
 		@port         = options.port
 		
+		# Perform an initial build.
+		@build => @handleRequest params for params in @queuedRequestParams
+		
 		# Watch files and set up the file server.
-		@build =>
-			@watchFiles()
-			@runServer()
+		@watchFiles()
+		@runServer()
 		
 		# Make some loggies.
 		address = lib.colors.bold "http://localhost:#{options.port}/"
@@ -68,10 +70,12 @@ class PreviewCommand extends lib.squire.Squire
 				if @isBuilding
 					@needsRebuild = true
 				else
+					start = Date.now()
 					@log "[Build]", "Begin", 1, "yellow"
 					
 					@build =>
-						@log "[Build]", "End", 1, "yellow"
+						duration = (Date.now() - start) / 1000.0
+						@log "[Build]", "End (#{duration}s)", 1, "yellow"
 						@handleRequest params for params in @queuedRequestParams
 	
 	# Sets up the file server.

@@ -42,9 +42,9 @@ class Directory extends lib.squire.Squire
 			isDirectory = lib.fs.existsSync(path) and lib.fs.lstatSync(path).isDirectory()
 			
 			if isDirectory
-				@directories[name] = new lib.squire.Directory {path}
+				@directories[name] = new lib.squire.Directory { path, mode: @mode }
 			else
-				@files[name] = new lib.squire.File {path}
+				@files[name] = new lib.squire.File { path, mode: @mode }
 	
 	# Returns the file or directory at the given path, relative to this directory. For example, you
 	# can do something like `directory.getPath "path/to/my/file.txt"` to get that file.
