@@ -51,7 +51,7 @@ class PreviewCommand extends lib.squire.Squire
 		# Make some loggies.
 		address = lib.colors.bold "http://localhost:#{options.port}/"
 		console.log "\nRunning a local server at #{address}"
-		console.log "Everything will be rebuilt each time the browser is refreshed.\n"
+		console.log "Everything will be rebuilt whenever you save, add or remove a file.\n"
 	
 	# Set up a file watcher for input changes.
 	watchFiles: ->
