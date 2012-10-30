@@ -8,7 +8,7 @@ lib =
 	_:               require "underscore"
 	file:            require "file"
 	fs:              require "fs"
-	makeSynchronous: require "make-synchronous"
+	makeSynchronous: require "sync-please"
 	merge:           require "deepmerge"
 	path:            require "path"
 	squire:          require "../main"
